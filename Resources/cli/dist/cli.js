@@ -11,19 +11,19 @@ import { printIssues } from "./report.js";
 import { run, info, ok, warn, fail, color, commandExists } from "./util.js";
 import { LSREGISTER } from "./installer.js";
 import { detectXcodeTeam } from "./packager.js";
-const HELP = `chrome2safari — convert a Chrome extension to a Safari Web Extension
+const HELP = `viaduct — convert a Chrome extension to a Safari Web Extension
 
 USAGE
-  chrome2safari <input> [options]
-  chrome2safari <input> --analyze         # report only, no conversion
-  chrome2safari --doctor                  # check local toolchain
+  viaduct <input> [options]
+  viaduct <input> --analyze         # report only, no conversion
+  viaduct --doctor                  # check local toolchain
 
 INPUT
   A .zip, .crx, or an unpacked extension directory.
 
 OPTIONS
   -o, --output <dir>        Output directory (default: ./<AppName>_Safari)
-      --bundle-id <id>      Reverse-DNS bundle id (default: com.chrome2safari.<app>)
+      --bundle-id <id>      Reverse-DNS bundle id (default: com.viaduct.<app>)
       --app-name <name>     Host app name (default: extension name)
       --platforms <p>       all | macos | ios            (default: macos)
       --ci                  Clean-copy resources into the project (CI/TestFlight-safe)
@@ -72,7 +72,7 @@ function doctor() {
     return allOk ? 0 : 1;
 }
 function analyzeOnly(input, verbose) {
-    const scratch = mkdtempSync(join(tmpdir(), "chrome2safari-"));
+    const scratch = mkdtempSync(join(tmpdir(), "viaduct-"));
     try {
         const extPath = extractExtension(resolve(input), scratch);
         const manifest = loadManifest(extPath);

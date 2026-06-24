@@ -1,6 +1,6 @@
-name: Chrome2Safari
+name: Viaduct
 options:
-  bundleIdPrefix: com.chrome2safari
+  bundleIdPrefix: com.magicelk235
   deploymentTarget:
     macOS: "13.0"
   createIntermediateGroups: true
@@ -12,32 +12,72 @@ settings:
     DEVELOPMENT_TEAM: ""
     CODE_SIGN_STYLE: Automatic
 targets:
-  Chrome2Safari:
+  Viaduct:
     type: application
     platform: macOS
     sources:
       - path: Sources
+      - path: AppIcon.icon
+      - path: icon.png
+        buildPhase: resources
       - path: Resources/cli
         type: folder
         buildPhase: resources
+    dependencies:
+      - target: ViaductExtension
+        embed: true
     info:
       path: Info.plist
       properties:
-        CFBundleName: Chrome2Safari
-        CFBundleDisplayName: Chrome → Safari Converter
+        CFBundleName: Viaduct
+        CFBundleDisplayName: Viaduct
         CFBundleShortVersionString: "1.0.0"
         CFBundleVersion: "1"
         LSMinimumSystemVersion: "13.0"
         NSHumanReadableCopyright: "MIT"
         LSApplicationCategoryType: public.app-category.developer-tools
+        CFBundleURLTypes:
+          - CFBundleURLSchemes:
+              - viaduct
+            CFBundleURLName: com.magicelk235.viaduct
     entitlements:
-      path: Chrome2Safari.entitlements
+      path: Viaduct.entitlements
       properties:
+        # ponytail: NO app-sandbox. The app shells out to node/xcodebuild/lsregister/open;
+        # the sandbox blocks exec of those binaries entirely, breaking the whole pipeline.
+        # MAS distribution was never viable for a tool that drives the dev toolchain.
         com.apple.security.app-sandbox: false
         com.apple.security.network.client: true
-        com.apple.security.files.user-selected.read-write: true
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.chrome2safari.app
-        ENABLE_HARDENED_RUNTIME: true
+        PRODUCT_BUNDLE_IDENTIFIER: com.magicelk235.viaduct
+        ENABLE_HARDENED_RUNTIME: false
         INFOPLIST_KEY_NSPrincipalClass: NSApplication
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+
+  ViaductExtension:
+    type: app-extension
+    platform: macOS
+    sources:
+      - path: Extension
+    info:
+      path: Extension/Info.plist
+      properties:
+        CFBundleName: ViaductExtension
+        CFBundleDisplayName: Viaduct Extension
+        CFBundleShortVersionString: "1.0.0"
+        CFBundleVersion: "1"
+        LSMinimumSystemVersion: "13.0"
+        NSHumanReadableCopyright: "MIT"
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.Safari.web-extension
+          NSExtensionPrincipalClass: SafariWebExtensionHandler
+    entitlements:
+      path: Extension/ViaductExtension.entitlements
+      properties:
+        com.apple.security.app-sandbox: true
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.magicelk235.viaduct.Extension
+        ENABLE_HARDENED_RUNTIME: false
+        OTHER_LDFLAGS: ["-Xlinker", "-u", "-Xlinker", "_OBJC_CLASS_$_SafariWebExtensionHandler"]

@@ -1,0 +1,22 @@
+{
+  "manifest_version": 3,
+  "name": "Viaduct Install",
+  "version": "1.0.0",
+  "description": "Install Chrome extensions in Safari via Viaduct",
+  "icons": {
+    "48": "icon.png"
+  },
+  "content_scripts": [
+    {
+      "matches": ["*://chromewebstore.google.com/detail/*"],
+      "js": ["content.js"]
+    }
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "permissions": [
+    "activeTab",
+    "nativeMessaging"
+  ]
+}

@@ -1,6 +1,6 @@
 import Foundation
 
-/// Locates node + the bundled/updated chrome2safari CLI and runs it,
+/// Locates node + the bundled/updated viaduct CLI and runs it,
 /// streaming combined stdout/stderr line-by-line.
 final class CLIRunner {
     static let shared = CLIRunner()
@@ -15,7 +15,7 @@ final class CLIRunner {
     static var supportCLIDir: URL {
         let base = FileManager.default
             .urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
-            .appendingPathComponent("Chrome2Safari", isDirectory: true)
+            .appendingPathComponent("Viaduct", isDirectory: true)
             .appendingPathComponent("cli", isDirectory: true)
         return base
     }

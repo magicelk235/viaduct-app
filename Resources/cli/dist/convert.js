@@ -7,6 +7,7 @@ import { scanJsFiles } from "./analyze.js";
 import { stageExtension } from "./stage.js";
 import { writeShim, injectShimIntoHtmlPages, injectPopupSizing, convertServiceWorkerToBackgroundPage, SHIM_FILENAME } from "./shim.js";
 import { applyOAuthBridge } from "./oauth-bridge.js";
+import { applySidepanel } from "./sidepanel.js";
 import { applyDnr } from "./dnr.js";
 import { writeTempLoadInstructions } from "./tempload.js";
 import { installToSafari } from "./installer.js";
@@ -20,7 +21,7 @@ export function convert(opts) {
         manifestVersion: 3,
         issues: [],
     };
-    const scratch = mkdtempSync(join(tmpdir(), "chrome2safari-"));
+    const scratch = mkdtempSync(join(tmpdir(), "viaduct-"));
     // Throwaway DerivedData from buildXcodeProject; removed once the built app is moved out.
     let derivedDir;
     const cleanup = () => {
@@ -83,6 +84,13 @@ export function convert(opts) {
         if (convertServiceWorkerToBackgroundPage(stageDir, transformed)) {
             ok("Service worker → persistent background page (Safari reachability)");
         }
+        // Fake a docked side panel (Safari has no native one): toolbar button
+        // toggles an injected iframe of the panel HTML. Runs after the background
+        // is finalized so the onClicked relay lands in the right place. When it
+        // fires, the action no longer has a popup, so skip the popover sizing.
+        const sidepanelNotes = applySidepanel(stageDir, transformed, shimFile === SHIM_FILENAME ? SHIM_FILENAME : undefined);
+        for (const n of sidepanelNotes)
+            ok(n);
         writeManifest(stageDir, transformed);
         const popupFile = (transformed.action ?? transformed.browser_action)?.default_popup;
         if (popupFile)

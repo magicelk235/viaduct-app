@@ -3,3 +3,5 @@ DerivedData/
 *.xcodeproj/xcuserdata/
 *.xcodeproj/project.xcworkspace/xcuserdata/
 .DS_Store
+.build/
+Resources/cli/Claude_Safari/

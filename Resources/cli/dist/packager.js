@@ -230,5 +230,5 @@ export function detectXcodeTeam() {
 }
 export function defaultBundleId(appName) {
     const slug = appName.replace(/[^A-Za-z0-9]/g, "");
-    return `com.chrome2safari.${slug || "extension"}`;
+    return `com.viaduct.${slug || "extension"}`;
 }

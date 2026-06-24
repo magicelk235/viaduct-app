@@ -1,12 +1,12 @@
 import Foundation
 
-/// Keeps the chrome2safari CLI current by pulling the published npm package.
+/// Keeps the viaduct CLI current by pulling the published npm package.
 /// npm ships a prebuilt `dist/`, so updating is download + extract + atomic
 /// swap into Application Support (which CLIRunner prefers) — no build step.
 final class CLIUpdater {
     static let shared = CLIUpdater()
 
-    private let pkg = "chrome2safari"
+    private let pkg = "@magicelk235/viaduct"
 
     enum UpdateError: LocalizedError {
         case registry(String)
@@ -45,10 +45,12 @@ final class CLIUpdater {
 
     /// Fetch the npm package document.
     private func fetchPackageDoc() async throws -> PackageDoc {
-        let url = URL(string: "https://registry.npmjs.org/\(pkg)")!
+        // Scoped names need the "/" percent-encoded for the registry path.
+        let encoded = pkg.replacingOccurrences(of: "/", with: "%2F")
+        let url = URL(string: "https://registry.npmjs.org/\(encoded)")!
         var req = URLRequest(url: url)
         req.setValue("application/json", forHTTPHeaderField: "Accept")
-        req.setValue("Chrome2SafariApp", forHTTPHeaderField: "User-Agent")
+        req.setValue("ViaductApp", forHTTPHeaderField: "User-Agent")
         let (data, resp) = try await URLSession.shared.data(for: req)
         guard let http = resp as? HTTPURLResponse, http.statusCode == 200 else {
             throw UpdateError.registry("HTTP \((resp as? HTTPURLResponse)?.statusCode ?? -1)")
@@ -70,7 +72,11 @@ final class CLIUpdater {
     }
 
     /// Download + extract the latest npm tarball into Application Support. `log` streams progress.
-    func update(log: @escaping (String) -> Void) async throws {
+    /// `log` is always invoked on the main thread so callers can mutate `@Published` state safely.
+    func update(rawLog: @escaping (String) -> Void) async throws {
+        // ponytail: hop every log call to main here so the 6 inline calls below
+        // and runProcess's handler share one main-thread guarantee.
+        let log: (String) -> Void = { line in DispatchQueue.main.async { rawLog(line) } }
         let doc = try await fetchPackageDoc()
         let latest = doc.distTags.latest
         log("Latest published: \(latest)")
@@ -169,7 +175,7 @@ final class CLIUpdater {
             guard !d.isEmpty, let s = String(data: d, encoding: .utf8) else { return }
             for line in s.split(separator: "\n", omittingEmptySubsequences: false) {
                 let t = String(line)
-                if !t.isEmpty { DispatchQueue.main.async { log(t) } }
+                if !t.isEmpty { log(t) }
             }
         }
         try p.run()

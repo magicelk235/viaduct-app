@@ -1,0 +1,560 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		0523B4340A556E2FC8D07245 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = EC951A109BC2D9F744B5551A /* ContentView.swift */; };
+		06DD26A7C7920C7AF8FDFBC3 /* App.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4706037E93DBAA4A3F086E94 /* App.swift */; };
+		1EE76700C7DC11A36FAEE4BC /* ConvertAnimations.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD24BC2D7FBDC2959615B2BD /* ConvertAnimations.swift */; };
+		2B029B0B07AA19483E9DA8BB /* AppMode.swift in Sources */ = {isa = PBXBuildFile; fileRef = 48578BB525C063A21AD9F40D /* AppMode.swift */; };
+		2D188D3EA38AF17BCD41915E /* icon.png in Resources */ = {isa = PBXBuildFile; fileRef = D5DF22DC54CA787439C7D93E /* icon.png */; };
+		380DF86B2C777A78CFE2122E /* CLIRunner.swift in Sources */ = {isa = PBXBuildFile; fileRef = 09BE5C61C57681BCE4413B57 /* CLIRunner.swift */; };
+		383D7605B5918563624D9D63 /* ExtensionRenewer.swift in Sources */ = {isa = PBXBuildFile; fileRef = B940EB4254E642C973760112 /* ExtensionRenewer.swift */; };
+		45FA411398B88953C1F15878 /* SafariWebExtensionHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = F87C69746F349EE36E0488A6 /* SafariWebExtensionHandler.swift */; };
+		544A439C6481249E7C287FE7 /* ActivationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 72B65E78309624F2ED7F17DB /* ActivationView.swift */; };
+		5CFB2E5454F3B4826AD9EAC2 /* icon.png in Resources */ = {isa = PBXBuildFile; fileRef = 6DA2AA9A7141526C03A24FD3 /* icon.png */; };
+		64A64A03445710FDDC87DF8C /* UserModeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D6A5AD59DEEF416F7494A43E /* UserModeView.swift */; };
+		6F22E359967E24989CBFA394 /* manifest.json in Resources */ = {isa = PBXBuildFile; fileRef = 79DF44B127A97253CEBE0C02 /* manifest.json */; };
+		743656629FCBFFDD7754637B /* Feedback.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD6684D69AFF320AB76FBFD8 /* Feedback.swift */; };
+		7974A26A5768F2BB83B9F07C /* ConvertOptions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B2A0A414CC85860A87063B5 /* ConvertOptions.swift */; };
+		88FF27AFCBE2D89DE8E568D9 /* ViaductExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 58D150FB914882216A502FBE /* ViaductExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		925D294EAE84D135730B82E9 /* AppIcon.icon in Resources */ = {isa = PBXBuildFile; fileRef = 330566E75A535162514BBFA6 /* AppIcon.icon */; };
+		B553D1EED34752D8F031C0A5 /* content.js in Resources */ = {isa = PBXBuildFile; fileRef = 46A0D6A732F9ADA35FA28A8D /* content.js */; };
+		B878ADE702EB943E794C4965 /* LicenseManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 57EF2AA67C8160B7269036B6 /* LicenseManager.swift */; };
+		B87D25E00EF821C1EEF60240 /* ConversionHistory.swift in Sources */ = {isa = PBXBuildFile; fileRef = 96F1ADB5A0FE75373E14B3EE /* ConversionHistory.swift */; };
+		C1E9EB617221B5E8C3280CE6 /* cli in Resources */ = {isa = PBXBuildFile; fileRef = 5AE5FA1D49555608AC2C665D /* cli */; };
+		C8166273B730DDD088D8F714 /* background.js in Resources */ = {isa = PBXBuildFile; fileRef = BFBEBF47F3929776DC55B329 /* background.js */; };
+		CBA72BAC72BC33E0C7C7B79D /* ConverterViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6EBFE922AB1245ED752C9321 /* ConverterViewModel.swift */; };
+		D498F700B216CEF067756D6A /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 614D8805DDE093D020F1D0D7 /* Theme.swift */; };
+		E200E4056A21FDD6CCE1D87F /* CLIUpdater.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5A6E1B55880A88354EC17F8F /* CLIUpdater.swift */; };
+		E827408EA78A95108D5F62D2 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DF2B7969794EF0B93CC897FE /* SettingsView.swift */; };
+		FB447A2CB916C3211D0E4B8D /* ExtensionInfo.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7E0BBB8EEE9DC5F0962C0F7 /* ExtensionInfo.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		0A5354E47763B5BB63AA6B5A /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 09E4D0EEC295AD42EF85A3EE /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = E557CE5AE9927C2539B41D87;
+			remoteInfo = ViaductExtension;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		5C39C90F02F571EFDCD3B162 /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				88FF27AFCBE2D89DE8E568D9 /* ViaductExtension.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
+/* Begin PBXFileReference section */
+		09BE5C61C57681BCE4413B57 /* CLIRunner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CLIRunner.swift; sourceTree = "<group>"; };
+		129FB30329F2C8050E59D618 /* ViaductExtension.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = ViaductExtension.entitlements; sourceTree = "<group>"; };
+		330566E75A535162514BBFA6 /* AppIcon.icon */ = {isa = PBXFileReference; lastKnownFileType = wrapper.icon; path = AppIcon.icon; sourceTree = "<group>"; };
+		46A0D6A732F9ADA35FA28A8D /* content.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = content.js; sourceTree = "<group>"; };
+		4706037E93DBAA4A3F086E94 /* App.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = App.swift; sourceTree = "<group>"; };
+		48578BB525C063A21AD9F40D /* AppMode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppMode.swift; sourceTree = "<group>"; };
+		4B2A0A414CC85860A87063B5 /* ConvertOptions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConvertOptions.swift; sourceTree = "<group>"; };
+		57EF2AA67C8160B7269036B6 /* LicenseManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LicenseManager.swift; sourceTree = "<group>"; };
+		58D150FB914882216A502FBE /* ViaductExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = ViaductExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		5A6E1B55880A88354EC17F8F /* CLIUpdater.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CLIUpdater.swift; sourceTree = "<group>"; };
+		5AE5FA1D49555608AC2C665D /* cli */ = {isa = PBXFileReference; lastKnownFileType = folder; name = cli; path = Resources/cli; sourceTree = SOURCE_ROOT; };
+		614D8805DDE093D020F1D0D7 /* Theme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Theme.swift; sourceTree = "<group>"; };
+		6DA2AA9A7141526C03A24FD3 /* icon.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = icon.png; sourceTree = "<group>"; };
+		6EBFE922AB1245ED752C9321 /* ConverterViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConverterViewModel.swift; sourceTree = "<group>"; };
+		72B65E78309624F2ED7F17DB /* ActivationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActivationView.swift; sourceTree = "<group>"; };
+		79DF44B127A97253CEBE0C02 /* manifest.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = manifest.json; sourceTree = "<group>"; };
+		96F1ADB5A0FE75373E14B3EE /* ConversionHistory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConversionHistory.swift; sourceTree = "<group>"; };
+		A37C3C24384547982754F0EE /* Viaduct.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Viaduct.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		A67B80F0FD9B492A25C0D3E9 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		B940EB4254E642C973760112 /* ExtensionRenewer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExtensionRenewer.swift; sourceTree = "<group>"; };
+		BFBEBF47F3929776DC55B329 /* background.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = background.js; sourceTree = "<group>"; };
+		C7E0BBB8EEE9DC5F0962C0F7 /* ExtensionInfo.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExtensionInfo.swift; sourceTree = "<group>"; };
+		CD24BC2D7FBDC2959615B2BD /* ConvertAnimations.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConvertAnimations.swift; sourceTree = "<group>"; };
+		CD6684D69AFF320AB76FBFD8 /* Feedback.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Feedback.swift; sourceTree = "<group>"; };
+		D5DF22DC54CA787439C7D93E /* icon.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = icon.png; sourceTree = "<group>"; };
+		D6A5AD59DEEF416F7494A43E /* UserModeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserModeView.swift; sourceTree = "<group>"; };
+		DF2B7969794EF0B93CC897FE /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		EC951A109BC2D9F744B5551A /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		F87C69746F349EE36E0488A6 /* SafariWebExtensionHandler.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SafariWebExtensionHandler.swift; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXGroup section */
+		085C626C5FF443CD47D69871 = {
+			isa = PBXGroup;
+			children = (
+				330566E75A535162514BBFA6 /* AppIcon.icon */,
+				6DA2AA9A7141526C03A24FD3 /* icon.png */,
+				5FC7AEC4389A028DACB68F07 /* Extension */,
+				F403EBE36A4E8B05C566BB34 /* Resources */,
+				CF63F65F6AE26DCB91D428E5 /* Sources */,
+				7C0E8ABABEAAC589DEB809EA /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		5FC7AEC4389A028DACB68F07 /* Extension */ = {
+			isa = PBXGroup;
+			children = (
+				A67B80F0FD9B492A25C0D3E9 /* Info.plist */,
+				F87C69746F349EE36E0488A6 /* SafariWebExtensionHandler.swift */,
+				129FB30329F2C8050E59D618 /* ViaductExtension.entitlements */,
+				7F232B2B7EBB5F89BE7C9CD6 /* Resources */,
+			);
+			path = Extension;
+			sourceTree = "<group>";
+		};
+		7C0E8ABABEAAC589DEB809EA /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				A37C3C24384547982754F0EE /* Viaduct.app */,
+				58D150FB914882216A502FBE /* ViaductExtension.appex */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		7F232B2B7EBB5F89BE7C9CD6 /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				BFBEBF47F3929776DC55B329 /* background.js */,
+				46A0D6A732F9ADA35FA28A8D /* content.js */,
+				D5DF22DC54CA787439C7D93E /* icon.png */,
+				79DF44B127A97253CEBE0C02 /* manifest.json */,
+			);
+			path = Resources;
+			sourceTree = "<group>";
+		};
+		CF63F65F6AE26DCB91D428E5 /* Sources */ = {
+			isa = PBXGroup;
+			children = (
+				72B65E78309624F2ED7F17DB /* ActivationView.swift */,
+				4706037E93DBAA4A3F086E94 /* App.swift */,
+				48578BB525C063A21AD9F40D /* AppMode.swift */,
+				09BE5C61C57681BCE4413B57 /* CLIRunner.swift */,
+				5A6E1B55880A88354EC17F8F /* CLIUpdater.swift */,
+				EC951A109BC2D9F744B5551A /* ContentView.swift */,
+				96F1ADB5A0FE75373E14B3EE /* ConversionHistory.swift */,
+				CD24BC2D7FBDC2959615B2BD /* ConvertAnimations.swift */,
+				6EBFE922AB1245ED752C9321 /* ConverterViewModel.swift */,
+				4B2A0A414CC85860A87063B5 /* ConvertOptions.swift */,
+				C7E0BBB8EEE9DC5F0962C0F7 /* ExtensionInfo.swift */,
+				B940EB4254E642C973760112 /* ExtensionRenewer.swift */,
+				CD6684D69AFF320AB76FBFD8 /* Feedback.swift */,
+				57EF2AA67C8160B7269036B6 /* LicenseManager.swift */,
+				DF2B7969794EF0B93CC897FE /* SettingsView.swift */,
+				614D8805DDE093D020F1D0D7 /* Theme.swift */,
+				D6A5AD59DEEF416F7494A43E /* UserModeView.swift */,
+			);
+			path = Sources;
+			sourceTree = "<group>";
+		};
+		F403EBE36A4E8B05C566BB34 /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				5AE5FA1D49555608AC2C665D /* cli */,
+			);
+			path = Resources;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		E557CE5AE9927C2539B41D87 /* ViaductExtension */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = B0ED65151073DF35FDD17020 /* Build configuration list for PBXNativeTarget "ViaductExtension" */;
+			buildPhases = (
+				88B1872F4B7F5DB4F5BEF861 /* Sources */,
+				EDE19498C23975B9925655F3 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = ViaductExtension;
+			packageProductDependencies = (
+			);
+			productName = ViaductExtension;
+			productReference = 58D150FB914882216A502FBE /* ViaductExtension.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
+		FF44307020060B6248DAED46 /* Viaduct */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 30E438FE7382C7E659C371C1 /* Build configuration list for PBXNativeTarget "Viaduct" */;
+			buildPhases = (
+				8447CB9A519BE4019124E3E9 /* Sources */,
+				2734418A22F3D57141CDDA1B /* Resources */,
+				5C39C90F02F571EFDCD3B162 /* Embed Foundation Extensions */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				F9112DE625F50C497C1A9CAE /* PBXTargetDependency */,
+			);
+			name = Viaduct;
+			packageProductDependencies = (
+			);
+			productName = Viaduct;
+			productReference = A37C3C24384547982754F0EE /* Viaduct.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		09E4D0EEC295AD42EF85A3EE /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = YES;
+				LastUpgradeCheck = 1430;
+				TargetAttributes = {
+					E557CE5AE9927C2539B41D87 = {
+						DevelopmentTeam = "";
+						ProvisioningStyle = Automatic;
+					};
+					FF44307020060B6248DAED46 = {
+						DevelopmentTeam = "";
+						ProvisioningStyle = Automatic;
+					};
+				};
+			};
+			buildConfigurationList = D62076400568A8551725B671 /* Build configuration list for PBXProject "Viaduct" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				Base,
+				en,
+			);
+			mainGroup = 085C626C5FF443CD47D69871;
+			minimizedProjectReferenceProxies = 1;
+			preferredProjectObjectVersion = 77;
+			productRefGroup = 7C0E8ABABEAAC589DEB809EA /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				FF44307020060B6248DAED46 /* Viaduct */,
+				E557CE5AE9927C2539B41D87 /* ViaductExtension */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		2734418A22F3D57141CDDA1B /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				925D294EAE84D135730B82E9 /* AppIcon.icon in Resources */,
+				C1E9EB617221B5E8C3280CE6 /* cli in Resources */,
+				5CFB2E5454F3B4826AD9EAC2 /* icon.png in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		EDE19498C23975B9925655F3 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				C8166273B730DDD088D8F714 /* background.js in Resources */,
+				B553D1EED34752D8F031C0A5 /* content.js in Resources */,
+				2D188D3EA38AF17BCD41915E /* icon.png in Resources */,
+				6F22E359967E24989CBFA394 /* manifest.json in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		8447CB9A519BE4019124E3E9 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				544A439C6481249E7C287FE7 /* ActivationView.swift in Sources */,
+				06DD26A7C7920C7AF8FDFBC3 /* App.swift in Sources */,
+				2B029B0B07AA19483E9DA8BB /* AppMode.swift in Sources */,
+				380DF86B2C777A78CFE2122E /* CLIRunner.swift in Sources */,
+				E200E4056A21FDD6CCE1D87F /* CLIUpdater.swift in Sources */,
+				0523B4340A556E2FC8D07245 /* ContentView.swift in Sources */,
+				B87D25E00EF821C1EEF60240 /* ConversionHistory.swift in Sources */,
+				1EE76700C7DC11A36FAEE4BC /* ConvertAnimations.swift in Sources */,
+				7974A26A5768F2BB83B9F07C /* ConvertOptions.swift in Sources */,
+				CBA72BAC72BC33E0C7C7B79D /* ConverterViewModel.swift in Sources */,
+				FB447A2CB916C3211D0E4B8D /* ExtensionInfo.swift in Sources */,
+				383D7605B5918563624D9D63 /* ExtensionRenewer.swift in Sources */,
+				743656629FCBFFDD7754637B /* Feedback.swift in Sources */,
+				B878ADE702EB943E794C4965 /* LicenseManager.swift in Sources */,
+				E827408EA78A95108D5F62D2 /* SettingsView.swift in Sources */,
+				D498F700B216CEF067756D6A /* Theme.swift in Sources */,
+				64A64A03445710FDDC87DF8C /* UserModeView.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		88B1872F4B7F5DB4F5BEF861 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				45FA411398B88953C1F15878 /* SafariWebExtensionHandler.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		F9112DE625F50C497C1A9CAE /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = E557CE5AE9927C2539B41D87 /* ViaductExtension */;
+			targetProxy = 0A5354E47763B5BB63AA6B5A /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		0C06BAF5B790747B1F822EB9 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_STYLE = Automatic;
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = "";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 13.0;
+				MARKETING_VERSION = 1.0.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+		5A0D18636401A1055946DEBD /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = Extension/ViaductExtension.entitlements;
+				COMBINE_HIDPI_IMAGES = YES;
+				ENABLE_HARDENED_RUNTIME = NO;
+				INFOPLIST_FILE = Extension/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@executable_path/../../../../Frameworks",
+				);
+				OTHER_LDFLAGS = (
+					"-Xlinker",
+					"-u",
+					"-Xlinker",
+					_OBJC_CLASS_$_SafariWebExtensionHandler,
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.magicelk235.viaduct.Extension;
+				SDKROOT = macosx;
+			};
+			name = Release;
+		};
+		6DF09EFEE50E015232BD4414 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_STYLE = Automatic;
+				COPY_PHASE_STRIP = NO;
+				CURRENT_PROJECT_VERSION = 1;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = "";
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"DEBUG=1",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 13.0;
+				MARKETING_VERSION = 1.0.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = macosx;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		CB3378B6A83660EB43B56297 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = Viaduct.entitlements;
+				COMBINE_HIDPI_IMAGES = YES;
+				ENABLE_HARDENED_RUNTIME = NO;
+				INFOPLIST_FILE = Info.plist;
+				INFOPLIST_KEY_NSPrincipalClass = NSApplication;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.magicelk235.viaduct;
+				SDKROOT = macosx;
+			};
+			name = Debug;
+		};
+		D86D763F6659F6C2C39DDDF5 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = Extension/ViaductExtension.entitlements;
+				COMBINE_HIDPI_IMAGES = YES;
+				ENABLE_HARDENED_RUNTIME = NO;
+				INFOPLIST_FILE = Extension/Info.plist;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@executable_path/../../../../Frameworks",
+				);
+				OTHER_LDFLAGS = (
+					"-Xlinker",
+					"-u",
+					"-Xlinker",
+					_OBJC_CLASS_$_SafariWebExtensionHandler,
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.magicelk235.viaduct.Extension;
+				SDKROOT = macosx;
+			};
+			name = Debug;
+		};
+		FCF15DB3DA70C34490D9AF88 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_ENTITLEMENTS = Viaduct.entitlements;
+				COMBINE_HIDPI_IMAGES = YES;
+				ENABLE_HARDENED_RUNTIME = NO;
+				INFOPLIST_FILE = Info.plist;
+				INFOPLIST_KEY_NSPrincipalClass = NSApplication;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.magicelk235.viaduct;
+				SDKROOT = macosx;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		30E438FE7382C7E659C371C1 /* Build configuration list for PBXNativeTarget "Viaduct" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				CB3378B6A83660EB43B56297 /* Debug */,
+				FCF15DB3DA70C34490D9AF88 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		B0ED65151073DF35FDD17020 /* Build configuration list for PBXNativeTarget "ViaductExtension" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				D86D763F6659F6C2C39DDDF5 /* Debug */,
+				5A0D18636401A1055946DEBD /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		D62076400568A8551725B671 /* Build configuration list for PBXProject "Viaduct" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				6DF09EFEE50E015232BD4414 /* Debug */,
+				0C06BAF5B790747B1F822EB9 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 09E4D0EEC295AD42EF85A3EE /* Project object */;
+}

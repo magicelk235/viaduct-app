@@ -10,6 +10,36 @@
   var pending = Object.create(null);
   var seq = 0;
 
+  // Safari's web-extension IPC encoder is stricter than Chrome's: a message
+  // payload carrying a non-structured-cloneable value (function, DOM node,
+  // window, circular ref) makes WebKit reject it as an *invalid message* and
+  // kill the page process (EXC_GUARD in didReceiveInvalidMessage — surfaces as
+  // "this webpage was reloaded because a problem occurred"). Chrome silently
+  // drops such props instead. Deep-sanitize to a clone-safe value before send.
+  function sanitize(value, seen) {
+    if (value === null || typeof value !== "object") {
+      return typeof value === "function" ? undefined : value;
+    }
+    if (typeof Node !== "undefined" && value instanceof Node) return undefined;
+    if (value === window) return undefined;
+    seen = seen || [];
+    if (seen.indexOf(value) !== -1) return undefined;   // break cycles
+    seen.push(value);
+    var out;
+    if (Array.isArray(value)) {
+      out = value.map(function (v) { return sanitize(v, seen); });
+    } else {
+      out = {};
+      for (var k in value) {
+        if (!Object.prototype.hasOwnProperty.call(value, k)) continue;
+        var s = sanitize(value[k], seen);
+        if (s !== undefined) out[k] = s;
+      }
+    }
+    seen.pop();
+    return out;
+  }
+
   window.addEventListener("message", function (ev) {
     if (ev.source !== window) return;
     var d = ev.data;
@@ -37,7 +67,7 @@
         else { console.log("[bridge] SW->page resp", mtype, reqId, resp); resolve(resp); }
       };
     });
-    window.postMessage({ __claudeBridge: "page", reqId: reqId, msg: msg }, window.location.origin);
+    window.postMessage({ __claudeBridge: "page", reqId: reqId, msg: sanitize(msg) }, window.location.origin);
     if (cb) { p.then(function (r) { cb(r); }, function () { cb(undefined); }); return; }
     return p;
   }

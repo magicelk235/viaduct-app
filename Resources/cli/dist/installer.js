@@ -75,10 +75,14 @@ export function installToSafari(opts) {
             warn('Could not set "Allow Unsigned Extensions"; enable it manually (Develop menu).');
         }
     }
-    info("Launching host app to register the extension …");
-    run("/usr/bin/open", [dest]);
+    // Launch the host app once so macOS/pluginkit registers the extension, but
+    // do it in the background and hidden (-g -j) so it doesn't pop to the
+    // foreground. The user opens it themselves via the app's "Open extension"
+    // button when they're ready.
+    info("Registering the extension (host app launched in background) …");
+    run("/usr/bin/open", ["-g", "-j", dest]);
     if (applyUnsigned)
-        run("/usr/bin/open", ["-a", "Safari"]);
+        run("/usr/bin/open", ["-g", "-a", "Safari"]);
     result.registered = bundleRegistered(pluginkitStatus(), opts.bundleId);
     if (result.registered)
         ok("pluginkit lists the extension as registered.");

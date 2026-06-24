@@ -1,5 +1,7 @@
-function installViaduct(extId) {
-  window.location.href = `viaduct://install?id=${extId}`;
+function installViaduct(extId, name) {
+  let url = `viaduct://install?id=${extId}`;
+  if (name) url += `&name=${encodeURIComponent(name)}`;
+  window.location.href = url;
 }
 
 function enableInstallButton() {
@@ -51,11 +53,18 @@ document.addEventListener('click', (e) => {
   const clickPhrases = ['add to safari', 'available on chrome', 'add to chrome', 'get chrome'];
   
   if (clickPhrases.some(phrase => text.includes(phrase))) {
-    const match = window.location.pathname.match(/\/detail\/[^/]+\/([a-z]{32})/);
+    // Store URL is /detail/<slug>/<id>. Capture both: the slug names the app so
+    // it isn't named after the random-looking id. Prefer the page's real <h1>
+    // title; fall back to de-slugifying the URL segment.
+    const match = window.location.pathname.match(/\/detail\/([^/]+)\/([a-z]{32})/);
     if (match) {
         e.preventDefault();
         e.stopPropagation();
-        installViaduct(match[1]);
+        const heading = document.querySelector('h1')?.innerText?.trim();
+        const fromSlug = decodeURIComponent(match[1])
+          .replace(/-/g, ' ')
+          .replace(/\b\w/g, c => c.toUpperCase());
+        installViaduct(match[2], heading || fromSlug);
     }
   }
 }, true);

@@ -60,11 +60,16 @@ document.addEventListener('click', (e) => {
     if (match) {
         e.preventDefault();
         e.stopPropagation();
-        const heading = document.querySelector('h1')?.innerText?.trim();
+        // The store sets <title> to "<Extension Name> - Chrome Web Store" for the
+        // current page — reliable, unlike querySelector('h1') which can grab a
+        // featured/related listing. De-slugged URL segment is the fallback.
+        const fromTitle = document.title
+          .replace(/\s*[-–|]\s*Chrome Web Store\s*$/i, '')
+          .trim();
         const fromSlug = decodeURIComponent(match[1])
           .replace(/-/g, ' ')
           .replace(/\b\w/g, c => c.toUpperCase());
-        installViaduct(match[2], heading || fromSlug);
+        installViaduct(match[2], fromTitle || fromSlug);
     }
   }
 }, true);

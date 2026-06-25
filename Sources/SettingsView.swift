@@ -6,6 +6,7 @@ struct SettingsView: View {
     @ObservedObject var vm: ConverterViewModel
     @ObservedObject private var history: ConversionHistory
     @ObservedObject private var license = LicenseManager.shared
+    @State private var showDeactivateConfirm = false
 
     init(mode: Binding<AppMode>, vm: ConverterViewModel) {
         _mode = mode
@@ -25,6 +26,7 @@ struct SettingsView: View {
                         .padding(.bottom, Theme.Space.xxs)
 
                     interfaceCard
+                    licenseCard
                     cliCard
                     signingCard
                     historyCard
@@ -76,6 +78,43 @@ struct SettingsView: View {
                         .font(Theme.Font.caption())
                         .foregroundStyle(Theme.Colors.accentBlue)
                 }
+            }
+        }
+    }
+
+    private var licenseCard: some View {
+        SettingsSection(title: "License", symbol: "checkmark.seal") {
+            if license.isLicensed {
+                Text("PRO")
+                    .font(Theme.Font.caption())
+                    .foregroundStyle(Theme.Colors.accentGreen)
+                    .padding(.horizontal, 6).padding(.vertical, 2)
+                    .background(Capsule().fill(Theme.Colors.accentGreen.opacity(0.15)))
+            }
+        } content: {
+            if license.isLicensed {
+                Text("Your license is active — unlimited conversions and auto-renew.")
+                    .font(Theme.Font.caption())
+                    .foregroundStyle(Theme.Colors.mute)
+                Button("Deactivate on this Mac") { showDeactivateConfirm = true }
+                    .buttonStyle(.raycastTertiary)
+                    .confirmationDialog("Deactivate the license on this Mac?",
+                                        isPresented: $showDeactivateConfirm) {
+                        Button("Deactivate", role: .destructive) {
+                            license.deactivateAndClear()
+                        }
+                        Button("Cancel", role: .cancel) {}
+                    } message: {
+                        Text("You'll need to re-enter your key to reactivate. Use this when moving to another Mac.")
+                    }
+            } else {
+                Text("Running on the free tier (\(license.freeConversionsRemaining) of \(license.freeQuota) conversions left). Activate a license for unlimited conversions and auto-renew.")
+                    .font(Theme.Font.caption())
+                    .foregroundStyle(Theme.Colors.mute)
+                Link("Buy a license",
+                     destination: URL(string: "https://magicelk235.gumroad.com/l/viaduct")!)
+                    .font(Theme.Font.caption())
+                    .foregroundStyle(Theme.Colors.accentBlue)
             }
         }
     }

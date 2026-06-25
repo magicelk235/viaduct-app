@@ -8,6 +8,7 @@ import UniformTypeIdentifiers
 /// No arrow, no aurora; flat near-black canvas, Raycast glass.
 struct UserModeView: View {
     @ObservedObject var vm: ConverterViewModel
+    @ObservedObject private var license = LicenseManager.shared
     @Binding var mode: AppMode
 
     @State private var isTargeted = false
@@ -27,6 +28,7 @@ struct UserModeView: View {
                 header
                 dropCard
                 ctaBlock
+                freeUsesBadge
                 if showsHistory {
                     RecentConversions(history: vm.history, vm: vm)
                         .frame(maxHeight: 200)
@@ -50,6 +52,23 @@ struct UserModeView: View {
 
     private var header: some View {
         BrandLockup(subtitle: "Convert a Chrome extension and install it in Safari.")
+    }
+
+    // MARK: - Free-uses badge
+
+    /// Tells unlicensed users how many free conversions remain, so the paywall
+    /// isn't a surprise. Hidden entirely for licensed users and mid-convert.
+    @ViewBuilder
+    private var freeUsesBadge: some View {
+        if !license.isLicensed && showsHistory {
+            let left = license.freeConversionsRemaining
+            Text(left > 0
+                 ? "\(left) free conversion\(left == 1 ? "" : "s") left"
+                 : "Free conversions used — activate a license to continue")
+                .font(Theme.Font.caption())
+                .foregroundStyle(left > 0 ? Theme.Colors.mute : Theme.Colors.accentBlue)
+                .transition(.opacity)
+        }
     }
 
     // MARK: - Drop card (centerpiece)

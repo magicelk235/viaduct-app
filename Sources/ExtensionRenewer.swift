@@ -1,4 +1,5 @@
 import Foundation
+import UserNotifications
 
 /// Free Apple accounts sign extensions with a provisioning profile that lapses
 /// after ~7 days, after which Safari drops the extension. This re-runs the
@@ -56,6 +57,8 @@ final class ExtensionRenewer {
     /// Silent: no UI phase, best-effort. Called on launch + daily.
     func renewIfNeeded() {
         guard !running, !runner.isRunning else { return }
+        // If the user deleted the converted .app from Finder, stop renewing it.
+        history.pruneDeleted()
         let due = dueForRenewal()
         guard !due.isEmpty else { return }
         running = true
@@ -82,6 +85,27 @@ final class ExtensionRenewer {
                 cont.resume(returning: -1)
             }
         }
-        if code == 0 { history.markRenewed(id: rec.id, installedPath: rec.installedPath) }
+        if code == 0 {
+            history.markRenewed(id: rec.id, installedPath: rec.installedPath)
+        } else {
+            history.markRenewFailed(id: rec.id)
+            notifyFailure(rec)
+        }
+    }
+
+    /// Alert the user a renew failed — otherwise they only find out when Safari
+    /// silently drops the extension days later.
+    private func notifyFailure(_ rec: ConversionRecord) {
+        let center = UNUserNotificationCenter.current()
+        center.requestAuthorization(options: [.alert, .sound]) { granted, _ in
+            guard granted else { return }
+            let content = UNMutableNotificationContent()
+            content.title = "Couldn't renew \(rec.resolvedAppName)"
+            content.body = "Its signature lapses \(rec.expiresAt.formatted(date: .abbreviated, time: .omitted)). Open Viaduct and reconvert it before Safari drops it."
+            content.sound = .default
+            // ponytail: nil trigger = deliver now. No identifier reuse needed; one per failure.
+            center.add(UNNotificationRequest(identifier: rec.id.uuidString,
+                                             content: content, trigger: nil))
+        }
     }
 }

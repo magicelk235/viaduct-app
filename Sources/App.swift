@@ -1,5 +1,6 @@
 import SwiftUI
 import AppKit
+import ServiceManagement
 
 /// Turns on macOS native window tabbing so Cmd+T / the tab bar work. SwiftUI
 /// leaves `allowsAutomaticWindowTabbing` off by default, which disables Cmd+T.
@@ -62,9 +63,22 @@ struct ViaductApp: App {
             }
         }
 
+        // Keeps the process alive after the window closes, so the daily auto-renew
+        // timer keeps firing — the whole point of "auto" renew. Only shown to Pro
+        // users with auto-renew on; free users get no menu-bar clutter.
+        MenuBarExtra("Viaduct", systemImage: "arrow.triangle.2.circlepath",
+                     isInserted: menuBarVisible) {
+            RenewMenu(vm: vm)
+        }
+
         Settings {
             SettingsView(mode: mode, vm: vm)
         }
+    }
+
+    /// Show the menu-bar item only when auto-renew is actually active.
+    private var menuBarVisible: Binding<Bool> {
+        Binding(get: { license.isLicensed && vm.autoRenew }, set: { _ in })
     }
 
     private func handleOpenURL(_ url: URL) {
@@ -129,6 +143,41 @@ struct ViaductApp: App {
                 }
             }
         }
+    }
+}
+
+/// The menu-bar dropdown: renew status at a glance + quick actions. Lives here so
+/// the app stays resident (and the daily renew timer keeps firing) after the
+/// window is closed.
+struct RenewMenu: View {
+    @ObservedObject var vm: ConverterViewModel
+    @ObservedObject private var history: ConversionHistory
+
+    init(vm: ConverterViewModel) {
+        self.vm = vm
+        _history = ObservedObject(wrappedValue: vm.history)
+    }
+
+    var body: some View {
+        // Surface the worst state: any failed renew first, else the soonest expiry.
+        if let failed = history.records.first(where: { $0.lastRenewFailed == true }) {
+            Text("⚠︎ \(failed.resolvedAppName) renew failed")
+        } else if let next = history.records.min(by: { $0.expiresAt < $1.expiresAt }) {
+            Text("Next renew: \(next.resolvedAppName) \(next.expiresAt.formatted(.relative(presentation: .named)))")
+        } else {
+            Text("No extensions to renew")
+        }
+
+        Divider()
+
+        Button("Renew Now") { vm.renewNow() }
+            .disabled(vm.isRunning)
+        Button("Open Viaduct") {
+            NSApp.activate(ignoringOtherApps: true)
+            NSApp.windows.first?.makeKeyAndOrderFront(nil)
+        }
+        Divider()
+        Button("Quit Viaduct") { NSApp.terminate(nil) }
     }
 }
 

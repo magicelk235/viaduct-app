@@ -176,6 +176,25 @@ struct SettingsView: View {
         }
     }
 
+    /// Auto-renew state for a row: failure is loud (red), otherwise show next renew.
+    /// Only shown to licensed users — free tier doesn't auto-renew.
+    @ViewBuilder
+    private func renewStatus(_ rec: ConversionRecord) -> some View {
+        if license.isLicensed && vm.autoRenew {
+            if rec.lastRenewFailed == true {
+                Label("Renew failed — reconvert before \(rec.expiresAt.formatted(date: .abbreviated, time: .omitted))",
+                      systemImage: "exclamationmark.triangle.fill")
+                    .font(Theme.Font.caption())
+                    .foregroundStyle(Theme.Colors.accentRed)
+                    .lineLimit(1)
+            } else {
+                Text("Renews \(rec.expiresAt.formatted(.relative(presentation: .named)))")
+                    .font(Theme.Font.caption())
+                    .foregroundStyle(Theme.Colors.ash)
+            }
+        }
+    }
+
     private func historyRow(_ rec: ConversionRecord) -> some View {
         HStack(spacing: Theme.Space.md) {
             HistoryIcon(iconData: rec.iconData,
@@ -189,6 +208,7 @@ struct SettingsView: View {
                 Text(rec.date.formatted(date: .abbreviated, time: .shortened))
                     .font(Theme.Font.caption())
                     .foregroundStyle(Theme.Colors.mute)
+                renewStatus(rec)
             }
             Spacer()
             if let path = rec.installedPath {
@@ -200,6 +220,13 @@ struct SettingsView: View {
                 .buttonStyle(.raycastGhost)
                 .help("Reveal in Finder")
             }
+            Button {
+                history.remove(rec)
+            } label: {
+                Image(systemName: "trash")
+            }
+            .buttonStyle(.raycastGhost)
+            .help("Delete and stop auto-renewing")
         }
         .padding(.vertical, Theme.Space.xs)
         .padding(.horizontal, Theme.Space.sm)

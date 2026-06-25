@@ -1,5 +1,6 @@
 import SwiftUI
 import AppKit
+import ServiceManagement
 
 @MainActor
 final class ConverterViewModel: ObservableObject {
@@ -52,11 +53,16 @@ final class ConverterViewModel: ObservableObject {
     func onLaunch() {
         // Auto-update the CLI on launch (self-installs if a newer version exists).
         checkForUpdates()
+        // Forget extensions the user deleted from Finder, regardless of renew state.
+        history.pruneDeleted()
         startAutoRenew()
     }
 
     /// Kick off auto-renew at launch and re-check daily. Idempotent.
     func startAutoRenew() {
+        // Relaunch at login so the daily renew timer survives reboots — auto-renew
+        // is worthless if the app isn't running when the 7-day window closes.
+        syncLoginItem()
         guard autoRenewEnabled else { return }
         renewer.renewIfNeeded()
         guard renewTimer == nil else { return }
@@ -65,6 +71,26 @@ final class ConverterViewModel: ObservableObject {
                 guard let self, self.autoRenewEnabled, !self.isRunning else { return }
                 self.renewer.renewIfNeeded()
             }
+        }
+    }
+
+    /// Manual renew trigger from the menu bar. Same due-check as the timer.
+    func renewNow() {
+        guard autoRenewEnabled, !isRunning else { return }
+        renewer.renewIfNeeded()
+    }
+
+    /// Register/unregister the app as a login item to match `autoRenewEnabled`.
+    /// ponytail: SMAppService.mainApp — no separate helper bundle/plist to maintain.
+    func syncLoginItem() {
+        do {
+            if autoRenewEnabled {
+                if SMAppService.mainApp.status != .enabled { try SMAppService.mainApp.register() }
+            } else {
+                if SMAppService.mainApp.status == .enabled { try SMAppService.mainApp.unregister() }
+            }
+        } catch {
+            appendLog("⚠︎ Login-item update failed: \(error.localizedDescription)")
         }
     }
 

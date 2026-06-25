@@ -4,52 +4,93 @@ function installViaduct(extId, name) {
   window.location.href = url;
 }
 
+function removeChromePromos() {
+  // The blue "Switch to Chrome to install extensions and themes" banner has no stable
+  // id/class. The phrase bubbles up through every ancestor to <body>, so matching on
+  // textContent alone would hide the whole page. Only hide elements that are themselves
+  // banner-shaped: short (a row, not the page) and visible. visibility:hidden keeps
+  // layout out of the way without collapsing siblings.
+  const all = document.querySelectorAll('div, section, aside');
+  for (const el of all) {
+    if (!(el.textContent || '').toLowerCase().includes('switch to chrome to install')) continue;
+    const h = el.offsetHeight;
+    if (h > 0 && h < 120) { el.style.display = 'none'; }
+  }
+}
+
 function enableInstallButton() {
   const buttons = document.querySelectorAll('button, [role="button"], a');
   for (const btn of buttons) {
-    const text = (btn.innerText || '').toLowerCase().trim();
+    // textContent (not innerText) so disabled/greyed buttons still match.
+    const text = (btn.textContent || '').toLowerCase().trim();
     const targetPhrases = ['available on chrome', 'add to chrome', 'get chrome'];
-    
+
     if (targetPhrases.some(phrase => text.includes(phrase))) {
       // Re-enable disabled buttons
       if (btn.hasAttribute('disabled')) {
         btn.removeAttribute('disabled');
       }
       btn.style.pointerEvents = 'auto';
-      
-      // Change the label
-      if (!btn.dataset.viaductEnabled) {
-        btn.dataset.viaductEnabled = 'true';
-        
-        // Deep replace text nodes to preserve Google's button structure (spans, svgs)
-        const changeText = (el) => {
-          for (const child of el.childNodes) {
-            if (child.nodeType === Node.TEXT_NODE) {
-              const lower = child.nodeValue.toLowerCase().trim();
-              if (targetPhrases.some(p => lower.includes(p))) {
-                child.nodeValue = 'Add to Safari';
-              }
-            } else if (child.nodeType === Node.ELEMENT_NODE) {
-              changeText(child);
+
+      // Paint it the app's brand teal so the repurposed button reads as "ours",
+      // not Google's. setProperty(..., 'important') beats the store's own rules.
+      btn.style.setProperty('background', '#2DD4BF', 'important');
+      btn.style.setProperty('color', '#04201C', 'important');
+      btn.style.setProperty('border-color', '#2DD4BF', 'important');
+
+      // Deep replace text nodes to preserve Google's button structure (spans, svgs).
+      // No persistent flag: on SPA navigation Google reuses the same button node and
+      // resets its text to "Add to Chrome", so we must relabel whenever a Chrome
+      // phrase is present, not just the first time we see the node.
+      const changeText = (el) => {
+        for (const child of el.childNodes) {
+          if (child.nodeType === Node.TEXT_NODE) {
+            const lower = child.nodeValue.toLowerCase().trim();
+            if (targetPhrases.some(p => lower.includes(p))) {
+              child.nodeValue = 'Add to Safari';
             }
+          } else if (child.nodeType === Node.ELEMENT_NODE) {
+            // Inherit the teal text color over Google's per-span colors.
+            child.style.setProperty('color', '#04201C', 'important');
+            changeText(child);
           }
-        };
-        changeText(btn);
-      }
+        }
+      };
+      changeText(btn);
     }
   }
 }
 
-// Run immediately and observe DOM changes (since the store is an SPA)
-enableInstallButton();
-const observer = new MutationObserver(() => enableInstallButton());
-observer.observe(document.body, { childList: true, subtree: true });
+// The store is an SPA: it swaps page content via the History API without a full reload.
+// We run on every store page (run_at document_start, so document.body may not exist yet)
+// and keep a MutationObserver live for the whole session so client-side navigations are
+// handled without a manual reload.
+function apply() {
+  enableInstallButton();
+  removeChromePromos();
+}
+
+function start() {
+  apply();
+  // Content scripts run in an isolated world, so we can't hook the page's history.pushState
+  // to catch SPA navigations. The MutationObserver is the reliable signal: every client-side
+  // route change swaps DOM nodes, which fires this. It stays live for the whole session, so
+  // navigating into an extension without a reload is handled. popstate covers back/forward.
+  new MutationObserver(apply).observe(document.documentElement, { childList: true, subtree: true });
+  window.addEventListener('popstate', apply);
+}
+
+if (document.body) {
+  start();
+} else {
+  document.addEventListener('DOMContentLoaded', start, { once: true });
+}
 
 document.addEventListener('click', (e) => {
   const btn = e.target.closest('button, [role="button"], a');
   if (!btn) return;
   
-  const text = (btn.innerText || '').toLowerCase().trim();
+  const text = (btn.textContent || '').toLowerCase().trim();
   const clickPhrases = ['add to safari', 'available on chrome', 'add to chrome', 'get chrome'];
   
   if (clickPhrases.some(phrase => text.includes(phrase))) {

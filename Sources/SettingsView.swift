@@ -5,6 +5,7 @@ struct SettingsView: View {
     @Binding var mode: AppMode
     @ObservedObject var vm: ConverterViewModel
     @ObservedObject private var history: ConversionHistory
+    @ObservedObject private var license = LicenseManager.shared
 
     init(mode: Binding<AppMode>, vm: ConverterViewModel) {
         _mode = mode
@@ -80,14 +81,37 @@ struct SettingsView: View {
     }
 
     private var signingCard: some View {
-        SettingsSection(title: "Signing", symbol: "signature") {
+        let licensed = license.isLicensed
+        return SettingsSection(title: "Signing", symbol: "signature") {
+            if !licensed {
+                Text("PRO")
+                    .font(Theme.Font.caption())
+                    .foregroundStyle(Theme.Colors.accentBlue)
+                    .padding(.horizontal, 6).padding(.vertical, 2)
+                    .background(Capsule().fill(Theme.Colors.accentBlue.opacity(0.15)))
+            }
+        } content: {
+            // Free users always see (and get) OFF: the binding reads false and
+            // ignores writes. Licensed users get the real stored toggle.
             Toggle("Auto-renew extensions before they expire",
-                   isOn: $vm.autoRenew)
+                   isOn: licensed
+                       ? $vm.autoRenew
+                       : .constant(false))
                 .toggleStyle(.glass)
+                .disabled(!licensed)
                 .onChange(of: vm.autoRenew) { _ in vm.startAutoRenew() }
             Text("Free Apple accounts sign extensions for ~7 days. This rebuilds and re-signs your installed extensions before that lapses, so Safari never drops them. Uses the Apple identity from Xcode automatically.")
                 .font(Theme.Font.caption())
                 .foregroundStyle(Theme.Colors.mute)
+            if !licensed {
+                // Settings is its own window; the activation sheet lives on the
+                // main window. Just send them to buy — converting again surfaces
+                // the in-app paywall to paste the key.
+                Link("Unlock with a license",
+                     destination: URL(string: "https://magicelk235.gumroad.com/l/viaduct")!)
+                    .font(Theme.Font.caption())
+                    .foregroundStyle(Theme.Colors.accentBlue)
+            }
         }
     }
 

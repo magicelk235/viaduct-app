@@ -61,6 +61,36 @@ final class LicenseManager: ObservableObject {
 
     var isLicensed: Bool { state == .licensed }
 
+    // MARK: - Free tier (freemium)
+
+    /// How many conversions an unlicensed user gets before the hard lock.
+    let freeQuota = 2
+
+    /// Monotonic count of conversions an unlicensed user has spent. Soft
+    /// (UserDefaults) — a prefs wipe resets it, but that only buys 2 more free
+    /// signed conversions before the wall returns. ponytail: soft counter, move
+    /// to StoreKit/server only if free-tier abuse proves material.
+    private(set) var freeConversionsUsed: Int {
+        get { UserDefaults.standard.integer(forKey: "freeConversionsUsed") }
+        set {
+            objectWillChange.send()
+            UserDefaults.standard.set(newValue, forKey: "freeConversionsUsed")
+        }
+    }
+
+    /// Free conversions left before the paywall (0 once exhausted).
+    var freeConversionsRemaining: Int { max(0, freeQuota - freeConversionsUsed) }
+
+    /// The gate `userConvert()` checks: licensed users always pass; unlicensed
+    /// users pass until they've spent their free quota.
+    var canConvert: Bool { isLicensed || freeConversionsRemaining > 0 }
+
+    /// Spend one free conversion. No-op for licensed users (unlimited).
+    func recordFreeConversion() {
+        guard !isLicensed else { return }
+        freeConversionsUsed += 1
+    }
+
     // MARK: - Launch check
 
     /// Decide initial state. If we have a stored key, re-verify online;

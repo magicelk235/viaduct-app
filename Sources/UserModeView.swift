@@ -29,6 +29,7 @@ struct UserModeView: View {
                 ctaBlock
                 if showsHistory {
                     RecentConversions(history: vm.history, vm: vm)
+                        .frame(maxHeight: 200)
                 }
                 Spacer(minLength: Theme.Space.lg)
             }
@@ -319,8 +320,10 @@ struct RecentConversions: View {
                         .buttonStyle(.raycastGhost)
                 }
 
-                VStack(spacing: 2) {
-                    ForEach(history.records.prefix(5)) { row($0) }
+                ScrollView {
+                    VStack(spacing: 2) {
+                        ForEach(history.records.prefix(5)) { row($0) }
+                    }
                 }
             }
             .frame(maxWidth: .infinity, alignment: .leading)

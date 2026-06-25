@@ -8,8 +8,9 @@
   },
   "content_scripts": [
     {
-      "matches": ["*://chromewebstore.google.com/detail/*"],
-      "js": ["content.js"]
+      "matches": ["*://chromewebstore.google.com/*"],
+      "js": ["content.js"],
+      "run_at": "document_start"
     }
   ],
   "background": {

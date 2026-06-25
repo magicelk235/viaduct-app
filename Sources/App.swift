@@ -24,16 +24,25 @@ struct ViaductApp: App {
     var body: some Scene {
         WindowGroup {
             Group {
+                // Freemium: the app is usable without a license (2 free
+                // conversions). Only block on the brief launch license check;
+                // the paywall is presented in-flow when the free quota runs out.
                 switch license.state {
-                case .licensed:
-                    RootView(vm: vm, mode: mode)
                 case .unknown, .checking:
                     LaunchGateView()
-                case .unlicensed:
-                    ActivationView(license: license)
+                case .licensed, .unlicensed:
+                    RootView(vm: vm, mode: mode)
                 }
             }
             .onAppear { license.bootstrap(); vm.onLaunch() }
+            // Paywall: shown when an unlicensed user hits the free-quota wall.
+            // Dismisses itself once activation flips the license to .licensed.
+            .sheet(isPresented: $vm.showPaywall) {
+                ActivationView(license: license) { vm.showPaywall = false }
+                    .onChange(of: license.state) { newState in
+                        if newState == .licensed { vm.showPaywall = false }
+                    }
+            }
             // Brand teal as the app-wide accent for in-app SwiftUI controls.
             .tint(Theme.Colors.primary)
             // Follow the system appearance (light OR dark). Chrome is neutral and

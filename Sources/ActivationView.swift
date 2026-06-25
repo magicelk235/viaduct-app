@@ -1,8 +1,12 @@
 import SwiftUI
 
-/// First-run gate. Shown until the user activates a valid Lemon Squeezy key.
+/// Paywall. Shown as a sheet once an unlicensed user spends their free
+/// conversions; dismisses when a valid Gumroad key activates.
 struct ActivationView: View {
     @ObservedObject var license: LicenseManager
+    /// When set, a close affordance (button + Esc) dismisses without activating.
+    /// Used by the paywall sheet; omit for a non-dismissible launch wall.
+    var onClose: (() -> Void)? = nil
     @State private var key = ""
 
     private var checking: Bool { license.state == .checking }
@@ -11,17 +15,35 @@ struct ActivationView: View {
         ZStack {
             Theme.Colors.canvas.ignoresSafeArea()
 
+            if let onClose {
+                VStack {
+                    HStack {
+                        Spacer()
+                        Button(action: onClose) {
+                            Image(systemName: "xmark")
+                                .font(.system(size: 12, weight: .semibold))
+                                .foregroundStyle(Theme.Colors.mute)
+                        }
+                        .buttonStyle(.plain)
+                        .keyboardShortcut(.cancelAction)
+                    }
+                    Spacer()
+                }
+                .padding(Theme.Space.md)
+            }
+
             VStack(spacing: Theme.Space.lg) {
                 Image(systemName: "key.fill")
                     .font(.system(size: 34, weight: .regular))
                     .foregroundStyle(Theme.Colors.accentBlue)
                     .padding(.bottom, Theme.Space.xs)
 
-                Text("Activate Viaduct")
+                Text("You've used your \(license.freeQuota) free conversions")
                     .font(Theme.Font.headingMD())
                     .foregroundStyle(Theme.Colors.ink)
+                    .multilineTextAlignment(.center)
 
-                Text("Paste the license key from your purchase email to unlock conversions.")
+                Text("Paste the license key from your purchase email to unlock unlimited conversions.")
                     .font(Theme.Font.caption())
                     .foregroundStyle(Theme.Colors.mute)
                     .multilineTextAlignment(.center)
@@ -58,7 +80,7 @@ struct ActivationView: View {
             }
             .padding(Theme.Space.xxl)
         }
-        .frame(minWidth: 540, minHeight: 600)
+        .frame(width: 460)
     }
 
     private func activate() { license.activate(key: key) }

@@ -23,11 +23,21 @@ final class ConverterViewModel: ObservableObject {
     /// so the failure card can name the step that broke.
     @Published var lastReachedTrackPhase: ConvertPhase? = nil
 
+    /// Set when an unlicensed user hits the free-quota wall; drives the paywall sheet.
+    @Published var showPaywall = false
+
     let history = ConversionHistory()
 
     /// Auto re-sign installed extensions before the free-account 7-day signature
     /// lapses. On by default — it's the thing that keeps extensions from vanishing.
+    /// Pro-only: unlicensed users can't keep extensions alive past the ~7-day
+    /// Apple free-signing window, which is the upgrade lever.
     @AppStorage("autoRenew") var autoRenew = true
+
+    /// Whether auto-renew is actually allowed to run — the stored toggle AND a
+    /// valid license. Gating here (not just the toggle UI) means a free user
+    /// can't keep renewing by flipping the persisted flag some other way.
+    var autoRenewEnabled: Bool { autoRenew && LicenseManager.shared.isLicensed }
 
     private let runner = CLIRunner.shared
     private let updater = CLIUpdater.shared
@@ -47,12 +57,12 @@ final class ConverterViewModel: ObservableObject {
 
     /// Kick off auto-renew at launch and re-check daily. Idempotent.
     func startAutoRenew() {
-        guard autoRenew else { return }
+        guard autoRenewEnabled else { return }
         renewer.renewIfNeeded()
         guard renewTimer == nil else { return }
         renewTimer = Timer.scheduledTimer(withTimeInterval: 24 * 3600, repeats: true) { [weak self] _ in
             Task { @MainActor in
-                guard let self, self.autoRenew, !self.isRunning else { return }
+                guard let self, self.autoRenewEnabled, !self.isRunning else { return }
                 self.renewer.renewIfNeeded()
             }
         }
@@ -90,6 +100,9 @@ final class ConverterViewModel: ObservableObject {
             phase = .failed
             return
         }
+        // Freemium gate is enforced in runCLI (the choke point all conversion
+        // paths funnel through, including Developer mode), so it can't be
+        // bypassed by switching modes.
 
         // Force the user-friendly path: build, install to Applications, register with Safari.
         options.noBuild = false
@@ -122,6 +135,8 @@ final class ConverterViewModel: ObservableObject {
         history.add(name: name, sourcePath: archived ?? options.inputPath,
                     appName: options.appName,
                     installedPath: installedAppPath, iconData: extInfo?.icon?.pngData())
+        // Count this against the free quota (no-op once licensed).
+        LicenseManager.shared.recordFreeConversion()
     }
 
     /// Reveal a previously-installed extension app in Finder (used by history).
@@ -163,6 +178,16 @@ final class ConverterViewModel: ObservableObject {
             statusMessage = err
             appendLog("✗ \(err)")
             if userMode { failureSummary = err; phase = .failed }
+            return
+        }
+        // Freemium gate at the choke point: every conversion path lands here,
+        // so an unlicensed user can't bypass the quota via Developer mode.
+        // Analyze/doctor runs aren't conversions and stay free.
+        if label == "Conversion", !LicenseManager.shared.canConvert {
+            showPaywall = true
+            statusMessage = "Free conversions used. Activate a license to continue."
+            appendLog("✗ Free conversion limit reached.")
+            if userMode { phase = .idle }
             return
         }
         isRunning = true

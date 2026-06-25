@@ -23,7 +23,8 @@ struct ViaductApp: App {
     }
 
     var body: some Scene {
-        WindowGroup {
+        // Single window (not WindowGroup) — one app window, no Cmd+N duplicates.
+        Window("Viaduct", id: "main") {
             Group {
                 // Freemium: the app is usable without a license (2 free
                 // conversions). Only block on the brief launch license check;

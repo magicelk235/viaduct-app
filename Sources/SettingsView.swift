@@ -259,7 +259,7 @@ private struct SettingsSection<Accessory: View, Content: View>: View {
                 HStack(spacing: Theme.Space.sm) {
                     Image(systemName: symbol)
                         .font(.system(size: 13, weight: .medium))
-                        .foregroundStyle(Theme.Colors.mute)
+                        .foregroundStyle(Theme.Colors.primary)
                         .frame(width: 18)
                     Text(title)
                         .font(Theme.Font.headingSM())
@@ -283,7 +283,7 @@ private struct SettingsRow<Value: View>: View {
         HStack(spacing: Theme.Space.sm) {
             Image(systemName: icon)
                 .font(.system(size: 12))
-                .foregroundStyle(Theme.Colors.ash)
+                .foregroundStyle(Theme.Colors.primary)
                 .frame(width: 18)
             Text(title)
                 .font(Theme.Font.body())

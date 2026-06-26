@@ -24,6 +24,13 @@ without touching the terminal.
 - **Self-updating CLI**: on launch the app checks npm and, if a newer
   `@magicelk235/viaduct` exists, installs it automatically — no button, no app rebuild.
 
+## Install
+
+```sh
+brew tap magicelk235/viaduct
+brew install --cask viaduct
+```
+
 ## Requirements
 
 - macOS 13+

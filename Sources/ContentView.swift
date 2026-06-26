@@ -98,7 +98,7 @@ struct ContentView: View {
         VStack(spacing: 0) {
             HStack(spacing: Theme.Space.sm) {
                 Image(systemName: "terminal")
-                    .foregroundStyle(Theme.Colors.mute)
+                    .foregroundStyle(Theme.Colors.primary)
                 Text("Output")
                     .heading()
                     .font(Theme.Font.headingSM())
@@ -152,7 +152,7 @@ struct ContentView: View {
         VStack(spacing: Theme.Space.md) {
             Image(systemName: "terminal")
                 .font(.system(size: 28, weight: .regular))
-                .foregroundStyle(Theme.Colors.stone)
+                .foregroundStyle(Theme.Colors.primary)
             Text("Output appears here")
                 .font(Theme.Font.body())
                 .foregroundStyle(Theme.Colors.mute)
@@ -247,7 +247,7 @@ struct ContentView: View {
                 HStack(spacing: Theme.Space.sm) {
                     Image(systemName: systemImage)
                         .font(.system(size: 12, weight: .medium))
-                        .foregroundStyle(Theme.Colors.mute)
+                        .foregroundStyle(Theme.Colors.primary)
                     Text(title)
                         .heading()
                         .font(Theme.Font.headingSM())

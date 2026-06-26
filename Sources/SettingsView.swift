@@ -216,6 +216,7 @@ struct SettingsView: View {
                     NSWorkspace.shared.activateFileViewerSelecting([URL(fileURLWithPath: path)])
                 } label: {
                     Image(systemName: "arrow.up.right.square")
+                        .foregroundStyle(Theme.Colors.primary)
                 }
                 .buttonStyle(.raycastGhost)
                 .help("Reveal in Finder")

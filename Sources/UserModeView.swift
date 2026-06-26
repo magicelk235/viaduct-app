@@ -372,7 +372,7 @@ struct RecentConversions: View {
             Spacer(minLength: 0)
             Image(systemName: "chevron.right")
                 .font(.system(size: 10, weight: .semibold))
-                .foregroundStyle(Theme.Colors.ash)
+                .foregroundStyle(Theme.Colors.primary)
         }
         .padding(.horizontal, Theme.Space.sm)
         .padding(.vertical, 6)
@@ -417,7 +417,7 @@ struct HistoryDetailSheet: View {
             HStack(spacing: Theme.Space.sm) {
                 Image(systemName: "folder")
                     .font(.system(size: 11))
-                    .foregroundStyle(Theme.Colors.ash)
+                    .foregroundStyle(Theme.Colors.primary)
                 Text(record.sourcePath)
                     .font(Theme.Font.caption())
                     .foregroundStyle(sourceExists ? Theme.Colors.body : Theme.Colors.accentRed)

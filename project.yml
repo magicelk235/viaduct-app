@@ -23,6 +23,9 @@ targets:
       - path: Resources/cli
         type: folder
         buildPhase: resources
+      - path: Resources/bin
+        type: folder
+        buildPhase: resources
     dependencies:
       - target: ViaductExtension
         embed: true
@@ -54,6 +57,12 @@ targets:
         ENABLE_HARDENED_RUNTIME: false
         INFOPLIST_KEY_NSPrincipalClass: NSApplication
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+    preBuildScripts:
+      - name: Fetch Node
+        # Download a self-contained node into Resources/bin/node so the shipped .app
+        # carries its own runtime — the user never installs Node. Idempotent.
+        script: "\"$SRCROOT/Resources/bin/fetch-node.sh\""
+        basedOnDependencyAnalysis: false
 
   ViaductExtension:
     type: app-extension

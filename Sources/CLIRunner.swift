@@ -36,8 +36,19 @@ final class CLIRunner {
         return nil
     }
 
-    /// Find a usable node binary. Tries common install locations and PATH.
+    /// The self-contained node shipped inside the .app (Resources/bin/node).
+    /// Present in release builds; absent only if a dev build skipped fetch-node.sh.
+    static var bundledNode: URL? {
+        guard let url = Bundle.main.resourceURL?
+            .appendingPathComponent("bin/node", isDirectory: false) else { return nil }
+        return FileManager.default.isExecutableFile(atPath: url.path) ? url : nil
+    }
+
+    /// Find a usable node binary. Prefers the node bundled inside the app so the
+    /// user needs nothing installed; falls back to a system node only if the
+    /// bundled one is missing (e.g. an unfetched dev build).
     static func resolveNode() -> URL? {
+        if let bundled = bundledNode { return bundled }
         let candidates = [
             "/opt/homebrew/bin/node",
             "/usr/local/bin/node",
@@ -58,6 +69,26 @@ final class CLIRunner {
         }
         if let path = whichViaShell("npm") { return URL(fileURLWithPath: path) }
         return nil
+    }
+
+    // MARK: - Xcode availability
+
+    /// Whether the build/sign pipeline can run. The hard requirement is a FULL
+    /// Xcode install: `safari-web-extension-packager` and the `xcodebuild` signing
+    /// of an App-Sandbox .appex ship only with Xcode, not the Command Line Tools.
+    /// Apple gives us no lighter path — so we detect it and tell the user plainly
+    /// rather than letting the conversion die deep inside xcodebuild.
+    static func xcodeReady() -> Bool {
+        // `xcrun --find` resolves against the active developer dir. With only CLT
+        // selected (or no Xcode at all), the packager is not found → not ready.
+        let p = Process()
+        p.executableURL = URL(fileURLWithPath: "/usr/bin/xcrun")
+        p.arguments = ["--find", "safari-web-extension-packager"]
+        p.standardOutput = Pipe()
+        p.standardError = Pipe()
+        do { try p.run() } catch { return false }
+        p.waitUntilExit()
+        return p.terminationStatus == 0
     }
 
     static func whichViaShell(_ tool: String) -> String? {

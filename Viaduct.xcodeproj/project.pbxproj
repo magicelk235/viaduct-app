@@ -32,6 +32,7 @@
 		D498F700B216CEF067756D6A /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 614D8805DDE093D020F1D0D7 /* Theme.swift */; };
 		E200E4056A21FDD6CCE1D87F /* CLIUpdater.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5A6E1B55880A88354EC17F8F /* CLIUpdater.swift */; };
 		E827408EA78A95108D5F62D2 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DF2B7969794EF0B93CC897FE /* SettingsView.swift */; };
+		EB7FA085A32BE26506778407 /* bin in Resources */ = {isa = PBXBuildFile; fileRef = 5B3B349223B937D244E01611 /* bin */; };
 		FB447A2CB916C3211D0E4B8D /* ExtensionInfo.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7E0BBB8EEE9DC5F0962C0F7 /* ExtensionInfo.swift */; };
 /* End PBXBuildFile section */
 
@@ -71,6 +72,7 @@
 		58D150FB914882216A502FBE /* ViaductExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = ViaductExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		5A6E1B55880A88354EC17F8F /* CLIUpdater.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CLIUpdater.swift; sourceTree = "<group>"; };
 		5AE5FA1D49555608AC2C665D /* cli */ = {isa = PBXFileReference; lastKnownFileType = folder; name = cli; path = Resources/cli; sourceTree = SOURCE_ROOT; };
+		5B3B349223B937D244E01611 /* bin */ = {isa = PBXFileReference; lastKnownFileType = folder; name = bin; path = Resources/bin; sourceTree = SOURCE_ROOT; };
 		614D8805DDE093D020F1D0D7 /* Theme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Theme.swift; sourceTree = "<group>"; };
 		6DA2AA9A7141526C03A24FD3 /* icon.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = icon.png; sourceTree = "<group>"; };
 		6EBFE922AB1245ED752C9321 /* ConverterViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConverterViewModel.swift; sourceTree = "<group>"; };
@@ -162,6 +164,7 @@
 		F403EBE36A4E8B05C566BB34 /* Resources */ = {
 			isa = PBXGroup;
 			children = (
+				5B3B349223B937D244E01611 /* bin */,
 				5AE5FA1D49555608AC2C665D /* cli */,
 			);
 			path = Resources;
@@ -192,6 +195,7 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = 30E438FE7382C7E659C371C1 /* Build configuration list for PBXNativeTarget "Viaduct" */;
 			buildPhases = (
+				FC2CE8C82374EA97715A4004 /* Fetch Node */,
 				8447CB9A519BE4019124E3E9 /* Sources */,
 				2734418A22F3D57141CDDA1B /* Resources */,
 				5C39C90F02F571EFDCD3B162 /* Embed Foundation Extensions */,
@@ -253,6 +257,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				925D294EAE84D135730B82E9 /* AppIcon.icon in Resources */,
+				EB7FA085A32BE26506778407 /* bin in Resources */,
 				C1E9EB617221B5E8C3280CE6 /* cli in Resources */,
 				5CFB2E5454F3B4826AD9EAC2 /* icon.png in Resources */,
 			);
@@ -270,6 +275,28 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXResourcesBuildPhase section */
+
+/* Begin PBXShellScriptBuildPhase section */
+		FC2CE8C82374EA97715A4004 /* Fetch Node */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+			);
+			name = "Fetch Node";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"$SRCROOT/Resources/bin/fetch-node.sh\"";
+		};
+/* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
 		8447CB9A519BE4019124E3E9 /* Sources */ = {

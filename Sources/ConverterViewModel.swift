@@ -27,6 +27,10 @@ final class ConverterViewModel: ObservableObject {
     /// Set when an unlicensed user hits the free-quota wall; drives the paywall sheet.
     @Published var showPaywall = false
 
+    /// Set when a conversion needs full Xcode but it isn't installed/selected.
+    /// Drives the honest "install Xcode" card instead of a silent build failure.
+    @Published var needsXcode = false
+
     let history = ConversionHistory()
 
     /// Auto re-sign installed extensions before the free-account 7-day signature
@@ -109,7 +113,17 @@ final class ConverterViewModel: ObservableObject {
     // MARK: - Run actions
 
     func runConversion() {
-        runCLI(args: options.conversionArgs(), label: "Conversion")
+        let args = options.conversionArgs()
+        // A real build/sign needs full Xcode; --no-build / --temp-load do not.
+        let needsBuild = !args.contains("--no-build") && !args.contains("--temp-load")
+        if needsBuild, !CLIRunner.xcodeReady() {
+            needsXcode = true
+            statusMessage = "Full Xcode required for build/sign."
+            appendLog("\u{2717} " + Self.xcodeMissingMessage)
+            appendLog("  Tip: use --temp-load or --no-build to convert without Xcode.")
+            return
+        }
+        runCLI(args: args, label: "Conversion")
     }
     func runAnalyze()    { runCLI(args: options.analyzeArgs(),   label: "Analysis") }
     func runDoctor()     { runCLI(args: ConvertOptions.doctorArgs(), label: "Toolchain check") }
@@ -143,6 +157,17 @@ final class ConverterViewModel: ObservableObject {
                 .deletingPathExtension().lastPathComponent
         }
 
+        // Full Xcode is required to package + sign the extension (Apple ships the
+        // Safari packager only with Xcode). Detect it up front and explain, rather
+        // than letting the run die deep inside xcodebuild with a cryptic log.
+        guard CLIRunner.xcodeReady() else {
+            needsXcode = true
+            failureSummary = Self.xcodeMissingMessage
+            phase = .failed
+            Feedback.failure()
+            return
+        }
+
         installedAppPath = nil
         failureSummary = nil
         lastReachedTrackPhase = nil
@@ -163,6 +188,19 @@ final class ConverterViewModel: ObservableObject {
                     installedPath: installedAppPath, iconData: extInfo?.icon?.pngData())
         // Count this against the free quota (no-op once licensed).
         LicenseManager.shared.recordFreeConversion()
+    }
+
+    /// The honest, actionable message shown when full Xcode is missing. Stated
+    /// plainly: this is an Apple requirement we cannot bundle away.
+    static let xcodeMissingMessage =
+        "Converting to a Safari extension needs Apple\u{2019}s full Xcode, which only Apple can provide \u{2014} it isn\u{2019}t something the app can bundle. Install it (free, from the App Store), open it once to finish setup, then try again."
+
+    /// Open Xcode's App Store page so the user can install it in one click.
+    func openXcodeInstall() {
+        // Apple\u{2019}s Xcode App Store product page.
+        if let url = URL(string: "macappstore://apps.apple.com/app/xcode/id497799835") {
+            NSWorkspace.shared.open(url)
+        }
     }
 
     /// Reveal a previously-installed extension app in Finder (used by history).
@@ -195,6 +233,7 @@ final class ConverterViewModel: ObservableObject {
         failureSummary = nil
         lastExitCode = nil
         extInfo = nil
+        needsXcode = false
         options.inputPath = ""
         options.appName = ""
     }

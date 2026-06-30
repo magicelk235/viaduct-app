@@ -226,6 +226,7 @@ struct UserModeView: View {
     /// Name the step that failed, pulled from how far `phase` advanced before
     /// the CLI bailed. Falls back to a generic headline.
     private var failedHeadline: String {
+        if vm.needsXcode { return "One more thing: install Xcode" }
         if let last = vm.lastReachedTrackPhase {
             return "Failed while \(last.title.lowercased())"
         }
@@ -261,6 +262,21 @@ struct UserModeView: View {
                 }
                 .buttonStyle(.raycastPrimary)
                 Button("Convert another") { vm.resetUserFlow() }
+                    .buttonStyle(.raycastGhost)
+            }
+
+        case .failed where vm.needsXcode:
+            // The honest Xcode gate: one clear primary action — install it.
+            VStack(spacing: Theme.Space.sm) {
+                Button {
+                    Feedback.haptic(.generic)
+                    vm.openXcodeInstall()
+                } label: {
+                    Label("Install Xcode (free)", systemImage: "arrow.down.app")
+                        .frame(maxWidth: .infinity)
+                }
+                .buttonStyle(.raycastPrimary)
+                Button("I installed it — try again") { vm.resetUserFlow() }
                     .buttonStyle(.raycastGhost)
             }
 

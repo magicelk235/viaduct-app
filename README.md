@@ -34,8 +34,14 @@ brew install --cask viaduct
 ## Requirements
 
 - macOS 13+
-- A full Xcode install (for `safari-web-extension-packager` and `xcodebuild`)
-- Node.js 18+ on `PATH` (the app spawns `node` to run the bundled CLI)
+- A full Xcode install (for `safari-web-extension-packager` and `xcodebuild`).
+  Apple ships the Safari packager only with Xcode, not the Command Line Tools, so
+  this can't be bundled away. The app detects a missing Xcode on first convert and
+  links a one-click (free) install instead of failing silently.
+
+Node.js is **not** required — the app bundles its own self-contained `node` under
+`Contents/Resources/bin/`, so users install nothing for the runtime. (A system
+`node` is used only as a fallback if the bundled one is somehow absent.)
 
 > **Not sandboxed.** The app shells out to `node`, `xcodebuild`, `lsregister`,
 > and `open`, which the macOS App Sandbox forbids — so it ships unsandboxed and
@@ -52,7 +58,9 @@ xcodegen generate && open Viaduct.xcodeproj
 ```
 
 The CLI ships prebuilt under `Resources/cli/`. On launch the app checks npm for a
-newer version and can update itself in place.
+newer version and can update itself in place. A `Fetch Node` build phase downloads
+a self-contained `node` into `Resources/bin/` (gitignored) so the `.app` carries
+its own runtime.
 
 ## License
 

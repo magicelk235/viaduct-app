@@ -17,6 +17,7 @@
 		45FA411398B88953C1F15878 /* SafariWebExtensionHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = F87C69746F349EE36E0488A6 /* SafariWebExtensionHandler.swift */; };
 		544A439C6481249E7C287FE7 /* ActivationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 72B65E78309624F2ED7F17DB /* ActivationView.swift */; };
 		5CFB2E5454F3B4826AD9EAC2 /* icon.png in Resources */ = {isa = PBXBuildFile; fileRef = 6DA2AA9A7141526C03A24FD3 /* icon.png */; };
+		A1C0575600000000000015F0 /* icon.svg in Resources */ = {isa = PBXBuildFile; fileRef = A1C0575600000000000015F1 /* icon.svg */; };
 		64A64A03445710FDDC87DF8C /* UserModeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D6A5AD59DEEF416F7494A43E /* UserModeView.swift */; };
 		6F22E359967E24989CBFA394 /* manifest.json in Resources */ = {isa = PBXBuildFile; fileRef = 79DF44B127A97253CEBE0C02 /* manifest.json */; };
 		743656629FCBFFDD7754637B /* Feedback.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD6684D69AFF320AB76FBFD8 /* Feedback.swift */; };
@@ -27,6 +28,7 @@
 		B878ADE702EB943E794C4965 /* LicenseManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 57EF2AA67C8160B7269036B6 /* LicenseManager.swift */; };
 		B87D25E00EF821C1EEF60240 /* ConversionHistory.swift in Sources */ = {isa = PBXBuildFile; fileRef = 96F1ADB5A0FE75373E14B3EE /* ConversionHistory.swift */; };
 		C1E9EB617221B5E8C3280CE6 /* cli in Resources */ = {isa = PBXBuildFile; fileRef = 5AE5FA1D49555608AC2C665D /* cli */; };
+		C41913DBE7F2011934E416F7 /* InstallProgressBridge.swift in Sources */ = {isa = PBXBuildFile; fileRef = 54450BBE8A7C1AB7A103C71D /* InstallProgressBridge.swift */; };
 		C8166273B730DDD088D8F714 /* background.js in Resources */ = {isa = PBXBuildFile; fileRef = BFBEBF47F3929776DC55B329 /* background.js */; };
 		CBA72BAC72BC33E0C7C7B79D /* ConverterViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6EBFE922AB1245ED752C9321 /* ConverterViewModel.swift */; };
 		D498F700B216CEF067756D6A /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 614D8805DDE093D020F1D0D7 /* Theme.swift */; };
@@ -68,6 +70,7 @@
 		4706037E93DBAA4A3F086E94 /* App.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = App.swift; sourceTree = "<group>"; };
 		48578BB525C063A21AD9F40D /* AppMode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppMode.swift; sourceTree = "<group>"; };
 		4B2A0A414CC85860A87063B5 /* ConvertOptions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConvertOptions.swift; sourceTree = "<group>"; };
+		54450BBE8A7C1AB7A103C71D /* InstallProgressBridge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InstallProgressBridge.swift; sourceTree = "<group>"; };
 		57EF2AA67C8160B7269036B6 /* LicenseManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LicenseManager.swift; sourceTree = "<group>"; };
 		58D150FB914882216A502FBE /* ViaductExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = ViaductExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		5A6E1B55880A88354EC17F8F /* CLIUpdater.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CLIUpdater.swift; sourceTree = "<group>"; };
@@ -75,6 +78,7 @@
 		5B3B349223B937D244E01611 /* bin */ = {isa = PBXFileReference; lastKnownFileType = folder; name = bin; path = Resources/bin; sourceTree = SOURCE_ROOT; };
 		614D8805DDE093D020F1D0D7 /* Theme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Theme.swift; sourceTree = "<group>"; };
 		6DA2AA9A7141526C03A24FD3 /* icon.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = icon.png; sourceTree = "<group>"; };
+		A1C0575600000000000015F1 /* icon.svg */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = icon.svg; sourceTree = "<group>"; };
 		6EBFE922AB1245ED752C9321 /* ConverterViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConverterViewModel.swift; sourceTree = "<group>"; };
 		72B65E78309624F2ED7F17DB /* ActivationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActivationView.swift; sourceTree = "<group>"; };
 		79DF44B127A97253CEBE0C02 /* manifest.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = manifest.json; sourceTree = "<group>"; };
@@ -99,6 +103,7 @@
 			children = (
 				330566E75A535162514BBFA6 /* AppIcon.icon */,
 				6DA2AA9A7141526C03A24FD3 /* icon.png */,
+				A1C0575600000000000015F1 /* icon.svg */,
 				5FC7AEC4389A028DACB68F07 /* Extension */,
 				F403EBE36A4E8B05C566BB34 /* Resources */,
 				CF63F65F6AE26DCB91D428E5 /* Sources */,
@@ -153,6 +158,7 @@
 				C7E0BBB8EEE9DC5F0962C0F7 /* ExtensionInfo.swift */,
 				B940EB4254E642C973760112 /* ExtensionRenewer.swift */,
 				CD6684D69AFF320AB76FBFD8 /* Feedback.swift */,
+				54450BBE8A7C1AB7A103C71D /* InstallProgressBridge.swift */,
 				57EF2AA67C8160B7269036B6 /* LicenseManager.swift */,
 				DF2B7969794EF0B93CC897FE /* SettingsView.swift */,
 				614D8805DDE093D020F1D0D7 /* Theme.swift */,
@@ -260,6 +266,7 @@
 				EB7FA085A32BE26506778407 /* bin in Resources */,
 				C1E9EB617221B5E8C3280CE6 /* cli in Resources */,
 				5CFB2E5454F3B4826AD9EAC2 /* icon.png in Resources */,
+				A1C0575600000000000015F0 /* icon.svg in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -316,6 +323,7 @@
 				FB447A2CB916C3211D0E4B8D /* ExtensionInfo.swift in Sources */,
 				383D7605B5918563624D9D63 /* ExtensionRenewer.swift in Sources */,
 				743656629FCBFFDD7754637B /* Feedback.swift in Sources */,
+				C41913DBE7F2011934E416F7 /* InstallProgressBridge.swift in Sources */,
 				B878ADE702EB943E794C4965 /* LicenseManager.swift in Sources */,
 				E827408EA78A95108D5F62D2 /* SettingsView.swift in Sources */,
 				D498F700B216CEF067756D6A /* Theme.swift in Sources */,

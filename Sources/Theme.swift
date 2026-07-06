@@ -1,8 +1,8 @@
 import SwiftUI
 
-/// Central design tokens. DARK mode, lit by the app icon's aqua palette: a deep
-/// teal-black canvas with a 4-step surface ladder, and BRIGHT icon-aqua
-/// (#5CE0E0 highlight → #2BB3B3 mid → #3AABAB deep) carrying the CTA, accents,
+/// Central design tokens. DARK mode, lit by the app icon's teal-slate palette:
+/// a deep teal-black canvas with a 4-step surface ladder, and the icon teal
+/// (#21AF9F bright → #16746F deep, from the arch icon) carrying the CTA, accents,
 /// hairlines and glow. Token NAMES are unchanged so every consumer view keeps
 /// working without edits. Inter is substituted with SF Pro (macOS fallback).
 enum Theme {
@@ -15,12 +15,13 @@ enum Theme {
     // surface/text token is an adaptive light/dark pair; the accent is teal in
     // both. Token NAMES are unchanged so every consumer view re-themes for free.
     enum Colors {
-        // Brand accent — the icon's teal/aqua. Slightly brighter in dark for
-        // contrast. THE one hue: symbols, selection, primary action, focus.
-        static let primary        = Color(light: 0x12A594, dark: 0x2DD4BF)
-        static let primaryPressed = Color(light: 0x0E8174, dark: 0x14B8A6)
-        static let onPrimary      = Color(light: 0xFFFFFF, dark: 0x04201C)   // text on the teal pill
-        static let accentBlue      = Color(light: 0x12A594, dark: 0x2DD4BF)  // = brand teal (focus/info)
+        // Brand accent — the arch icon's teal (#21AF9F → #16746F). Deep end in light,
+        // bright end in dark, for legible contrast. THE one hue: symbols, selection, primary
+        // action, focus.
+        static let primary        = Color(light: 0x16746F, dark: 0x21AF9F)
+        static let primaryPressed = Color(light: 0x0F5551, dark: 0x1B958A)
+        static let onPrimary      = Color(light: 0xFFFFFF, dark: 0x0A1A1E)   // text on the teal pill
+        static let accentBlue      = Color(light: 0x16746F, dark: 0x21AF9F)  // = brand teal (focus/info)
 
         // Surface ladder (canvas → surface → elevated → card). Neutral greys,
         // a hair warm-cool-neutral, that flip with the system appearance.
@@ -46,9 +47,9 @@ enum Theme {
         static let accentGreen  = Color(light: 0x1A9D5A, dark: 0x30D158)   // success & progress (true green, distinct from teal accent)
         static let accentYellow = Color(light: 0xD4A017, dark: 0xFFC53D)   // warning
 
-        // Brand wash — teal crown → deep teal, behind the icon glow.
-        static let heroStripeStart = Color(light: 0x5EEAD4, dark: 0x5EEAD4)
-        static let heroStripeEnd   = Color(light: 0x0E8174, dark: 0x14B8A6)
+        // Brand wash — teal crown → deep teal-slate, behind the icon glow.
+        static let heroStripeStart = Color(light: 0x5FCEC0, dark: 0x5FCEC0)
+        static let heroStripeEnd   = Color(light: 0x16746F, dark: 0x136C68)
     }
 
     // MARK: - Radius

@@ -1,6 +1,0 @@
-| Repository / Link | Explanation |
-| --- | --- |
-| **[Open SwiftUI Animations](https://github.com/amosgyamfi/open-swiftui-animations)** | Contains over 200 copy-and-paste ready SwiftUI animations, ranging from simple transitions to complex and dynamic effects. Great for practical use and inspiration. |
-| **[SwiftUI-Animations by Shubham0812](https://github.com/Shubham0812/SwiftUI-Animations)** | A visual repo with over 20 custom animations and Metal shaders (loaders, toggles, interactive UI). Designed to easily run directly in an Xcode simulator. |
-| **[SwiftUI Spring Animations by GetStream](https://github.com/GetStream/swiftui-spring-animations)** | A complete visual cheat sheet for mastering physics-based animations, demonstrating how different spring parameters (stiffness, damping) affect fluid motion. |
-| **[Awesome iOS Animation](https://github.com/v5tech/awesome-ios-animation)** | A curated directory of popular third-party animation libraries and frameworks for both UIKit and SwiftUI, useful for finding tools like Lottie integrations or skeleton loaders. |

@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 768 768">
+  <!-- Viaduct arch mark — clean vector rebuild of icon.png (single monumental
+       arch), geometry traced from the PNG alpha channel. The menu bar renders
+       this as a template image, so the silhouette (alpha) is what matters
+       there; the teal gradient serves full-color use. -->
+  <defs>
+    <linearGradient id="teal" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#21AF9F"/>
+      <stop offset="1" stop-color="#16746F"/>
+    </linearGradient>
+  </defs>
+  <!-- top deck band, wider than the body, with a light lip highlight -->
+  <rect x="9" y="8" width="751" height="92" rx="16" fill="url(#teal)"/>
+  <rect x="9" y="8" width="751" height="30" rx="15" fill="#5FCEC0"/>
+  <!-- body: outward-flaring legs, tall elliptical arch opening -->
+  <path fill="url(#teal)" d="
+    M33 100
+    H736
+    L766 764
+    H556
+    V400
+    A172 214 0 0 0 212 400
+    V764
+    H3
+    Z"/>
+</svg>

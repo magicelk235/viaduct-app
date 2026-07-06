@@ -31,6 +31,10 @@ final class ConverterViewModel: ObservableObject {
     /// Drives the honest "install Xcode" card instead of a silent build failure.
     @Published var needsXcode = false
 
+    /// Chrome Web Store id of the install in flight (store flow only). Stamped
+    /// onto the history record so auto-renew can re-download the source by id.
+    var pendingStoreId: String?
+
     let history = ConversionHistory()
 
     /// Auto re-sign installed extensions before the free-account 7-day signature
@@ -177,15 +181,22 @@ final class ConverterViewModel: ObservableObject {
 
     /// Save the just-finished conversion to history.
     private func recordConversion() {
+        // Manifest name unless it's an unresolved __MSG_ i18n key; then the store
+        // display name (appName), then the filename — which for store installs is
+        // the random-looking extension id, so it's the last resort.
         let name = extInfo?.name.hasPrefix("__MSG_") == false
             ? extInfo!.name
-            : URL(fileURLWithPath: options.inputPath).deletingPathExtension().lastPathComponent
+            : (!options.appName.isEmpty
+                ? options.appName
+                : URL(fileURLWithPath: options.inputPath).deletingPathExtension().lastPathComponent)
         // Stash a durable copy of the source so auto-renew can rebuild later even if
         // the user moves/deletes the original (or the cached store .crx is purged).
         let archived = ExtensionRenewer.archiveSource(options.inputPath, appName: options.appName)
         history.add(name: name, sourcePath: archived ?? options.inputPath,
                     appName: options.appName,
-                    installedPath: installedAppPath, iconData: extInfo?.icon?.pngData())
+                    installedPath: installedAppPath, iconData: extInfo?.icon?.pngData(),
+                    storeId: pendingStoreId)
+        pendingStoreId = nil
         // Count this against the free quota (no-op once licensed).
         LicenseManager.shared.recordFreeConversion()
     }

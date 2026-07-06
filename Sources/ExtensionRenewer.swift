@@ -1,6 +1,38 @@
 import Foundation
 import UserNotifications
 
+/// Downloading .crx packages from the Chrome Web Store — shared by the
+/// store-page install flow and auto-renew's re-download fallback.
+enum ChromeStore {
+    struct DownloadError: LocalizedError {
+        let status: Int
+        var errorDescription: String? {
+            "Couldn't download that extension from the Chrome Web Store (status \(status)). It may be unlisted or removed."
+        }
+    }
+
+    /// Fetch the .crx for a store extension id into Caches. Verifies the "Cr24"
+    /// magic bytes: a failed lookup follows the redirect to a 404 HTML page, so
+    /// status alone isn't enough.
+    static func downloadCRX(id: String) async throws -> URL {
+        // The old `prod=chromecrx&prodversion=99` endpoint now 404s. This form
+        // (prodversion=120 + installsource=ondemand) still returns a real CRX.
+        let urlStr = "https://clients2.google.com/service/update2/crx?response=redirect&prodversion=120.0.0.0&acceptformat=crx2,crx3&x=id%3D\(id)%26installsource%3Dondemand%26uc"
+        guard let url = URL(string: urlStr) else { throw URLError(.badURL) }
+        let (tempURL, response) = try await URLSession.shared.download(from: url)
+        let status = (response as? HTTPURLResponse)?.statusCode ?? 200
+        let isCRX = (try? FileHandle(forReadingFrom: tempURL))
+            .map { fh in defer { try? fh.close() }; return fh.readData(ofLength: 4) == Data("Cr24".utf8) } ?? false
+        guard status == 200, isCRX else { throw DownloadError(status: status) }
+        let fm = FileManager.default
+        let dest = fm.urls(for: .cachesDirectory, in: .userDomainMask)[0]
+            .appendingPathComponent("\(id).crx")
+        if fm.fileExists(atPath: dest.path) { try fm.removeItem(at: dest) }
+        try fm.moveItem(at: tempURL, to: dest)
+        return dest
+    }
+}
+
 /// Free Apple accounts sign extensions with a provisioning profile that lapses
 /// after ~7 days, after which Safari drops the extension. This re-runs the
 /// conversion from the archived source for any installed extension nearing that
@@ -44,12 +76,13 @@ final class ExtensionRenewer {
         } catch { return nil }
     }
 
-    /// Records whose signature is at/near expiry and whose source still exists.
+    /// Records whose signature is at/near expiry, and that we can still rebuild:
+    /// the source exists, or it's a store install we can re-download by id.
     private func dueForRenewal() -> [ConversionRecord] {
         let cutoff = Date().addingTimeInterval(Self.renewWindow)
         return history.records.filter { rec in
             rec.expiresAt <= cutoff
-            && FileManager.default.fileExists(atPath: rec.sourcePath)
+            && (FileManager.default.fileExists(atPath: rec.sourcePath) || rec.storeId != nil)
         }
     }
 
@@ -69,8 +102,22 @@ final class ExtensionRenewer {
     }
 
     private func renew(_ rec: ConversionRecord) async {
+        var sourcePath = rec.sourcePath
+        // Archived source vanished (cache purge, failed archive)? Store installs
+        // can be re-pulled by id — that keeps the 7-day renew alive no matter what.
+        if !FileManager.default.fileExists(atPath: sourcePath) {
+            guard let sid = rec.storeId,
+                  let fresh = try? await ChromeStore.downloadCRX(id: sid) else {
+                history.markRenewFailed(id: rec.id)
+                notifyFailure(rec)
+                return
+            }
+            sourcePath = Self.archiveSource(fresh.path, appName: rec.resolvedAppName) ?? fresh.path
+            history.updateSource(id: rec.id, path: sourcePath)
+        }
+
         var opts = ConvertOptions()
-        opts.inputPath = rec.sourcePath
+        opts.inputPath = sourcePath
         opts.appName = rec.resolvedAppName
         opts.install = true
         opts.signing = .autoTeam   // re-mint the Apple-issued dev signature

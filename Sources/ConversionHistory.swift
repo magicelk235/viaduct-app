@@ -20,6 +20,9 @@ struct ConversionRecord: Codable, Identifiable {
     /// PNG of the extension's own icon, captured at conversion time. Optional
     /// so old records (and icon-less extensions) still decode.
     var iconData: Data?
+    /// Chrome Web Store id for store-flow installs. Lets auto-renew re-download
+    /// the .crx if the archived source vanishes (cache purge, failed archive).
+    var storeId: String?
 
     /// Effective app name for rebuilds.
     var resolvedAppName: String { appName ?? name }
@@ -39,11 +42,12 @@ final class ConversionHistory: ObservableObject {
     init() { load() }
 
     func add(name: String, sourcePath: String, appName: String,
-             installedPath: String?, iconData: Data?) {
+             installedPath: String?, iconData: Data?, storeId: String? = nil) {
         let now = Date()
         let record = ConversionRecord(name: name, sourcePath: sourcePath,
                                       appName: appName, installedPath: installedPath,
-                                      date: now, lastSigned: now, iconData: iconData)
+                                      date: now, lastSigned: now, iconData: iconData,
+                                      storeId: storeId)
         // Re-converting the same app replaces its record instead of stacking duplicates.
         records.removeAll { $0.resolvedAppName == appName }
         records.insert(record, at: 0)
@@ -67,6 +71,13 @@ final class ConversionHistory: ObservableObject {
         guard let i = records.firstIndex(where: { $0.id == id }) else { return }
         records[i].lastRenewAttempt = Date()
         records[i].lastRenewFailed = true
+        save()
+    }
+
+    /// Point a record at a fresh source copy (renew re-downloaded/re-archived it).
+    func updateSource(id: ConversionRecord.ID, path: String) {
+        guard let i = records.firstIndex(where: { $0.id == id }) else { return }
+        records[i].sourcePath = path
         save()
     }
 

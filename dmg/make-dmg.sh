@@ -1,6 +1,6 @@
 #!/bin/bash
-# Build a distributable Viaduct.dmg: dark frosted background, the app and an
-# /Applications symlink floating above the Viaduct arches that bridge them.
+# Build a distributable Viaduct.dmg: faux dark-Safari-window background (see
+# make-dmg-bg.swift), app and /Applications symlink flanking a ghost arch.
 # Run build.sh first (or pass an existing .app). Native hdiutil + AppleScript,
 # no third-party tooling. Run from anywhere — paths resolve to the repo root.
 set -euo pipefail
@@ -44,8 +44,8 @@ tell application "Finder"
     set arrangement of theViewOptions to not arranged
     set icon size of theViewOptions to 96
     set background picture of theViewOptions to file ".background:bg.png"
-    set position of item "Viaduct.app" of container window to {150, 130}
-    set position of item "Applications" of container window to {470, 130}
+    set position of item "Viaduct.app" of container window to {150, 240}
+    set position of item "Applications" of container window to {470, 240}
     update without registering applications
     delay 1
     close
@@ -55,7 +55,12 @@ EOF
 
 echo "==> Compressing"
 sync
-hdiutil detach "/Volumes/$VOL" >/dev/null
+# Finder can briefly hold the volume after layout — retry, then force
+for i in 1 2 3 4 5; do
+  hdiutil detach "/Volumes/$VOL" >/dev/null 2>&1 && break
+  [ "$i" = 5 ] && hdiutil detach "/Volumes/$VOL" -force >/dev/null
+  sleep 1
+done
 hdiutil convert "$RW" -format UDZO -imagekey zlib-level=9 -ov -o "$OUT" >/dev/null
 
 echo "==> Done: $OUT"

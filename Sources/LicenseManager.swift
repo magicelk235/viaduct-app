@@ -40,12 +40,17 @@ final class LicenseManager: ObservableObject {
 
     // MARK: - Keychain-backed storage
 
-    private let keyService = "com.viaduct.app.license"
+    private let keyService = "com.magicelk235.viaduct.license"
     private let keyAccountKey = "license-key"
 
+    /// Team-scoped keychain group (matches the `keychain-access-groups`
+    /// entitlement). Items written here are readable by any build signed with
+    /// this team, so re-signing across releases doesn't trigger a login prompt.
+    private let keyAccessGroup = "V8K8L3ZSD5.com.magicelk235.viaduct"
+
     private var storedKey: String? {
-        get { Keychain.read(service: keyService, account: keyAccountKey) }
-        set { Keychain.write(service: keyService, account: keyAccountKey, value: newValue) }
+        get { Keychain.read(service: keyService, account: keyAccountKey, accessGroup: keyAccessGroup) }
+        set { Keychain.write(service: keyService, account: keyAccountKey, value: newValue, accessGroup: keyAccessGroup) }
     }
 
     /// Last time a server verification succeeded — used for the offline grace window.
@@ -229,26 +234,28 @@ final class LicenseManager: ObservableObject {
 // MARK: - Keychain (tiny generic-password wrapper)
 
 enum Keychain {
-    static func read(service: String, account: String) -> String? {
-        let q: [String: Any] = [
+    static func read(service: String, account: String, accessGroup: String? = nil) -> String? {
+        var q: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrService as String: service,
             kSecAttrAccount as String: account,
             kSecReturnData as String: true,
             kSecMatchLimit as String: kSecMatchLimitOne,
         ]
+        if let accessGroup { q[kSecAttrAccessGroup as String] = accessGroup }
         var out: AnyObject?
         guard SecItemCopyMatching(q as CFDictionary, &out) == errSecSuccess,
               let data = out as? Data else { return nil }
         return String(data: data, encoding: .utf8)
     }
 
-    static func write(service: String, account: String, value: String?) {
-        let base: [String: Any] = [
+    static func write(service: String, account: String, value: String?, accessGroup: String? = nil) {
+        var base: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrService as String: service,
             kSecAttrAccount as String: account,
         ]
+        if let accessGroup { base[kSecAttrAccessGroup as String] = accessGroup }
         SecItemDelete(base as CFDictionary)
         guard let value, let data = value.data(using: .utf8) else { return }
         var add = base

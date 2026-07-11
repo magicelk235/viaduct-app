@@ -8,5 +8,16 @@
 	<false/>
 	<key>com.apple.security.network.client</key>
 	<true/>
+	<!-- Team-scoped keychain group so the stored license key survives re-signing
+	     across releases and auto-updates; without it macOS binds the item to the
+	     first build's signature and prompts for the login password on every
+	     differently-signed launch. Team prefix is hardcoded (not the
+	     AppIdentifierPrefix variable) because release.sh signs with a plain
+	     codesign entitlements pass that does no Xcode variable expansion. Must
+	     match the group literal in LicenseManager.swift. -->
+	<key>keychain-access-groups</key>
+	<array>
+		<string>V8K8L3ZSD5.com.magicelk235.viaduct</string>
+	</array>
 </dict>
 </plist>

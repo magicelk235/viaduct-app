@@ -27,8 +27,7 @@ without touching the terminal.
 ## Install
 
 ```sh
-brew tap magicelk235/viaduct
-brew install --cask viaduct
+brew install --cask magicelk235/magicelklabs/viaduct
 ```
 
 ## Requirements

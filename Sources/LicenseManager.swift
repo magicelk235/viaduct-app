@@ -38,19 +38,50 @@ final class LicenseManager: ObservableObject {
     @Published private(set) var state: State = .unknown
     @Published var lastError: String?
 
-    // MARK: - Keychain-backed storage
+    // MARK: - License storage
+    //
+    // Stored in a plain file under Application Support, NOT the Keychain. The
+    // Keychain binds an item to the build's code signature, so every re-signed
+    // release/auto-update triggered a login-password prompt; the
+    // `keychain-access-groups` entitlement that would fix that is restricted to
+    // provisioning-profile builds (a plain Developer ID app can't claim it — it
+    // fails to launch). A Gumroad license key isn't a secret worth that
+    // friction, so a file it is. ponytail: file over Keychain — the key is a
+    // purchase receipt, not a password.
 
-    private let keyService = "com.magicelk235.viaduct.license"
-    private let keyAccountKey = "license-key"
-
-    /// Team-scoped keychain group (matches the `keychain-access-groups`
-    /// entitlement). Items written here are readable by any build signed with
-    /// this team, so re-signing across releases doesn't trigger a login prompt.
-    private let keyAccessGroup = "V8K8L3ZSD5.com.magicelk235.viaduct"
+    /// ~/Library/Application Support/Viaduct/license (created lazily on first write).
+    private static let licenseFile: URL = {
+        let dir = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
+            .appendingPathComponent("Viaduct", isDirectory: true)
+        return dir.appendingPathComponent("license")
+    }()
 
     private var storedKey: String? {
-        get { Keychain.read(service: keyService, account: keyAccountKey, accessGroup: keyAccessGroup) }
-        set { Keychain.write(service: keyService, account: keyAccountKey, value: newValue, accessGroup: keyAccessGroup) }
+        get {
+            if let key = try? String(contentsOf: Self.licenseFile, encoding: .utf8), !key.isEmpty {
+                return key
+            }
+            // One-time migration: pull a key an older build left in the Keychain,
+            // then persist it to the file so we never touch the Keychain again.
+            if let legacy = Keychain.readLegacyLicense() {
+                Self.persist(legacy)
+                return legacy
+            }
+            return nil
+        }
+        set { Self.persist(newValue) }
+    }
+
+    /// Write the key to the license file (nil/empty clears it). Static so the
+    /// getter's migration path can call it without re-entering `storedKey`.
+    private static func persist(_ value: String?) {
+        guard let value, !value.isEmpty else {
+            try? FileManager.default.removeItem(at: licenseFile)
+            return
+        }
+        try? FileManager.default.createDirectory(at: licenseFile.deletingLastPathComponent(),
+                                                 withIntermediateDirectories: true)
+        try? value.write(to: licenseFile, atomically: true, encoding: .utf8)
     }
 
     /// Last time a server verification succeeded — used for the offline grace window.
@@ -231,35 +262,29 @@ final class LicenseManager: ObservableObject {
     }
 }
 
-// MARK: - Keychain (tiny generic-password wrapper)
+// MARK: - Legacy Keychain migration (read-only, one-time)
 
 enum Keychain {
-    static func read(service: String, account: String, accessGroup: String? = nil) -> String? {
-        var q: [String: Any] = [
-            kSecClass as String: kSecClassGenericPassword,
-            kSecAttrService as String: service,
-            kSecAttrAccount as String: account,
-            kSecReturnData as String: true,
-            kSecMatchLimit as String: kSecMatchLimitOne,
-        ]
-        if let accessGroup { q[kSecAttrAccessGroup as String] = accessGroup }
-        var out: AnyObject?
-        guard SecItemCopyMatching(q as CFDictionary, &out) == errSecSuccess,
-              let data = out as? Data else { return nil }
-        return String(data: data, encoding: .utf8)
-    }
-
-    static func write(service: String, account: String, value: String?, accessGroup: String? = nil) {
-        var base: [String: Any] = [
-            kSecClass as String: kSecClassGenericPassword,
-            kSecAttrService as String: service,
-            kSecAttrAccount as String: account,
-        ]
-        if let accessGroup { base[kSecAttrAccessGroup as String] = accessGroup }
-        SecItemDelete(base as CFDictionary)
-        guard let value, let data = value.data(using: .utf8) else { return }
-        var add = base
-        add[kSecValueData as String] = data
-        SecItemAdd(add as CFDictionary, nil)
+    /// Read a license key an older (Keychain-backed) build may have stored, so a
+    /// paying user isn't logged out by the switch to file storage. Read-only:
+    /// nothing new is ever written to the Keychain. Checks both service names
+    /// ever used. Returns nil (no prompt) when no such item exists — the case
+    /// for essentially everyone.
+    static func readLegacyLicense() -> String? {
+        for service in ["com.magicelk235.viaduct.license", "com.viaduct.app.license"] {
+            let q: [String: Any] = [
+                kSecClass as String: kSecClassGenericPassword,
+                kSecAttrService as String: service,
+                kSecAttrAccount as String: "license-key",
+                kSecReturnData as String: true,
+                kSecMatchLimit as String: kSecMatchLimitOne,
+            ]
+            var out: AnyObject?
+            if SecItemCopyMatching(q as CFDictionary, &out) == errSecSuccess,
+               let data = out as? Data, let key = String(data: data, encoding: .utf8) {
+                return key
+            }
+        }
+        return nil
     }
 }

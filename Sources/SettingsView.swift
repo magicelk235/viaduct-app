@@ -7,6 +7,7 @@ struct SettingsView: View {
     @ObservedObject private var history: ConversionHistory
     @ObservedObject private var license = LicenseManager.shared
     @State private var showDeactivateConfirm = false
+    @State private var licenseKey = ""
 
     init(mode: Binding<AppMode>, vm: ConverterViewModel) {
         _mode = mode
@@ -85,11 +86,7 @@ struct SettingsView: View {
     private var licenseCard: some View {
         SettingsSection(title: "License", symbol: "checkmark.seal") {
             if license.isLicensed {
-                Text("PRO")
-                    .font(Theme.Font.caption())
-                    .foregroundStyle(Theme.Colors.accentGreen)
-                    .padding(.horizontal, 6).padding(.vertical, 2)
-                    .background(Capsule().fill(Theme.Colors.accentGreen.opacity(0.15)))
+                ProBadge(color: Theme.Colors.accentGreen)
             }
         } content: {
             if license.isLicensed {
@@ -111,10 +108,39 @@ struct SettingsView: View {
                 Text("Running on the free tier (\(license.freeConversionsRemaining) of \(license.freeQuota) conversions left). Activate a license for unlimited conversions and auto-renew.")
                     .font(Theme.Font.caption())
                     .foregroundStyle(Theme.Colors.mute)
-                Link("Buy a license",
-                     destination: URL(string: "https://magicelk235.gumroad.com/l/viaduct")!)
-                    .font(Theme.Font.caption())
-                    .foregroundStyle(Theme.Colors.accentBlue)
+
+                // Key entry lives here so a user who already bought can activate
+                // WITHOUT first spending their free conversions to trigger the
+                // paywall sheet (the only other place the key field appeared).
+                TextField("XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX", text: $licenseKey)
+                    .textFieldStyle(.glass)
+                    .disabled(license.state == .checking)
+                    .onSubmit(activate)
+
+                if let err = license.lastError {
+                    Text(err)
+                        .font(Theme.Font.caption())
+                        .foregroundStyle(Theme.Colors.accentRed)
+                }
+
+                HStack {
+                    Button {
+                        activate()
+                    } label: {
+                        HStack(spacing: 6) {
+                            if license.state == .checking { ProgressView().controlSize(.small) }
+                            Text(license.state == .checking ? "Activating…" : "Activate")
+                        }
+                    }
+                    .buttonStyle(.raycastPrimary)
+                    .disabled(license.state == .checking
+                              || licenseKey.trimmingCharacters(in: .whitespaces).isEmpty)
+                    Spacer()
+                    Link("Buy a license",
+                         destination: URL(string: "https://magicelk235.gumroad.com/l/viaduct")!)
+                        .font(Theme.Font.caption())
+                        .foregroundStyle(Theme.Colors.accentBlue)
+                }
             }
         }
     }
@@ -123,11 +149,7 @@ struct SettingsView: View {
         let licensed = license.isLicensed
         return SettingsSection(title: "Signing", symbol: "signature") {
             if !licensed {
-                Text("PRO")
-                    .font(Theme.Font.caption())
-                    .foregroundStyle(Theme.Colors.accentBlue)
-                    .padding(.horizontal, 6).padding(.vertical, 2)
-                    .background(Capsule().fill(Theme.Colors.accentBlue.opacity(0.15)))
+                ProBadge(color: Theme.Colors.accentBlue)
             }
         } content: {
             // Free users always see (and get) OFF: the binding reads false and
@@ -233,6 +255,23 @@ struct SettingsView: View {
         .padding(.horizontal, Theme.Space.sm)
         .background(RoundedRectangle(cornerRadius: Theme.Radius.sm, style: .continuous)
             .fill(Theme.Colors.surfaceElevated))
+    }
+
+    private func activate() {
+        license.activate(key: licenseKey)
+    }
+}
+
+/// A small "PRO" tag. White text on a solid accent fill — a same-hue text on a
+/// low-alpha same-hue capsule washed out to near-invisible in light mode.
+struct ProBadge: View {
+    var color: Color
+    var body: some View {
+        Text("PRO")
+            .font(Theme.Font.caption())
+            .foregroundStyle(.white)
+            .padding(.horizontal, 6).padding(.vertical, 2)
+            .background(Capsule().fill(color))
     }
 }
 

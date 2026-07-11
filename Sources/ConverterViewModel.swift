@@ -83,7 +83,11 @@ final class ConverterViewModel: ObservableObject {
     }
 
     /// Manual renew trigger from the menu bar. Same due-check as the timer.
+    /// Pro-only: re-signing before expiry is a paid feature (matches the
+    /// Settings auto-renew toggle, which is also licensed-only). Guard here so
+    /// no caller can trigger a renew on the free tier.
     func renewNow() {
+        guard LicenseManager.shared.isLicensed else { showPaywall = true; return }
         guard autoRenewEnabled, !isRunning else { return }
         renewer.renewIfNeeded()
     }

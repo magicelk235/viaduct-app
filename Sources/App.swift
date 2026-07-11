@@ -240,6 +240,7 @@ struct ViaductApp: App {
 struct RenewMenu: View {
     @ObservedObject var vm: ConverterViewModel
     @ObservedObject private var history: ConversionHistory
+    @ObservedObject private var license = LicenseManager.shared
     @Environment(\.openWindow) private var openWindow
 
     init(vm: ConverterViewModel) {
@@ -258,8 +259,18 @@ struct RenewMenu: View {
     }
 
     var body: some View {
-        // One row per installed extension, soonest expiry first, failures on top.
-        if history.records.isEmpty {
+        // Expiry tracking + renewal is a Pro feature. Free users see an upsell,
+        // not extension expiry rows or a Renew action they can't use.
+        if !license.isLicensed {
+            Text("Renewal is a Pro feature")
+            Button("Go Pro to auto-renew") {
+                NSApp.setActivationPolicy(.regular)
+                openWindow(id: "main")
+                NSApp.activate(ignoringOtherApps: true)
+                vm.showPaywall = true
+            }
+        } else if history.records.isEmpty {
+            // One row per installed extension, soonest expiry first, failures on top.
             Text("No extensions installed")
         } else {
             Section("Extensions") {
@@ -278,8 +289,10 @@ struct RenewMenu: View {
 
         Divider()
 
-        Button("Renew Now") { vm.renewNow() }
-            .disabled(vm.isRunning)
+        if license.isLicensed {
+            Button("Renew Now") { vm.renewNow() }
+                .disabled(vm.isRunning)
+        }
         Button("Open Viaduct") {
             // Restore the Dock icon (quit-to-menubar drops it) and the window.
             NSApp.setActivationPolicy(.regular)

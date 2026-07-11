@@ -609,12 +609,15 @@ struct PhaseGlyph: View {
     }
 }
 
-/// The success label for a finished conversion. Text-only — no verify glyph.
+/// The success label for a finished conversion. Solid green pill + white text so
+/// it stays legible on the neutral glass card in both light and dark themes.
 struct DoneBadge: View {
     var body: some View {
-        Text("Installed in Safari")
+        Label("Installed in Safari", systemImage: "checkmark.circle.fill")
             .font(Theme.Font.caption())
-            .foregroundStyle(Theme.Colors.accentGreen)
+            .foregroundStyle(.white)
+            .padding(.horizontal, Theme.Space.sm).padding(.vertical, 3)
+            .background(Capsule().fill(Theme.Colors.accentGreen))
     }
 }
 

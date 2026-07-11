@@ -167,13 +167,15 @@ struct ContentView: View {
     }
 
     private func statusPill(success: Bool) -> some View {
+        // Solid color fill + white text: a same-color tint on translucent glass
+        // washed out to green-on-white and read as invisible. A filled capsule
+        // guarantees contrast in both light and dark.
         Label(success ? "Success" : "Failed",
               systemImage: success ? "checkmark.circle.fill" : "xmark.octagon.fill")
             .font(Theme.Font.caption())
-            .foregroundStyle(success ? Theme.Colors.accentGreen : Theme.Colors.accentRed)
+            .foregroundStyle(.white)
             .padding(.horizontal, Theme.Space.sm).padding(.vertical, 3)
-            .liquidGlass(radius: Theme.Radius.full,
-                         tint: success ? Theme.Colors.accentGreen : Theme.Colors.accentRed)
+            .background(Capsule().fill(success ? Theme.Colors.accentGreen : Theme.Colors.accentRed))
     }
 
     private func logColor(_ line: String) -> Color {

@@ -17,13 +17,13 @@
 		45FA411398B88953C1F15878 /* SafariWebExtensionHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = F87C69746F349EE36E0488A6 /* SafariWebExtensionHandler.swift */; };
 		544A439C6481249E7C287FE7 /* ActivationView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 72B65E78309624F2ED7F17DB /* ActivationView.swift */; };
 		5CFB2E5454F3B4826AD9EAC2 /* icon.png in Resources */ = {isa = PBXBuildFile; fileRef = 6DA2AA9A7141526C03A24FD3 /* icon.png */; };
-		A1C0575600000000000015F0 /* icon.svg in Resources */ = {isa = PBXBuildFile; fileRef = A1C0575600000000000015F1 /* icon.svg */; };
 		64A64A03445710FDDC87DF8C /* UserModeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D6A5AD59DEEF416F7494A43E /* UserModeView.swift */; };
 		6F22E359967E24989CBFA394 /* manifest.json in Resources */ = {isa = PBXBuildFile; fileRef = 79DF44B127A97253CEBE0C02 /* manifest.json */; };
 		743656629FCBFFDD7754637B /* Feedback.swift in Sources */ = {isa = PBXBuildFile; fileRef = CD6684D69AFF320AB76FBFD8 /* Feedback.swift */; };
 		7974A26A5768F2BB83B9F07C /* ConvertOptions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4B2A0A414CC85860A87063B5 /* ConvertOptions.swift */; };
 		88FF27AFCBE2D89DE8E568D9 /* ViaductExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 58D150FB914882216A502FBE /* ViaductExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		925D294EAE84D135730B82E9 /* AppIcon.icon in Resources */ = {isa = PBXBuildFile; fileRef = 330566E75A535162514BBFA6 /* AppIcon.icon */; };
+		A1C0575600000000000015F0 /* icon.svg in Resources */ = {isa = PBXBuildFile; fileRef = A1C0575600000000000015F1 /* icon.svg */; };
 		B553D1EED34752D8F031C0A5 /* content.js in Resources */ = {isa = PBXBuildFile; fileRef = 46A0D6A732F9ADA35FA28A8D /* content.js */; };
 		B878ADE702EB943E794C4965 /* LicenseManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 57EF2AA67C8160B7269036B6 /* LicenseManager.swift */; };
 		B87D25E00EF821C1EEF60240 /* ConversionHistory.swift in Sources */ = {isa = PBXBuildFile; fileRef = 96F1ADB5A0FE75373E14B3EE /* ConversionHistory.swift */; };
@@ -78,11 +78,11 @@
 		5B3B349223B937D244E01611 /* bin */ = {isa = PBXFileReference; lastKnownFileType = folder; name = bin; path = Resources/bin; sourceTree = SOURCE_ROOT; };
 		614D8805DDE093D020F1D0D7 /* Theme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Theme.swift; sourceTree = "<group>"; };
 		6DA2AA9A7141526C03A24FD3 /* icon.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = icon.png; sourceTree = "<group>"; };
-		A1C0575600000000000015F1 /* icon.svg */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = icon.svg; sourceTree = "<group>"; };
 		6EBFE922AB1245ED752C9321 /* ConverterViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConverterViewModel.swift; sourceTree = "<group>"; };
 		72B65E78309624F2ED7F17DB /* ActivationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActivationView.swift; sourceTree = "<group>"; };
 		79DF44B127A97253CEBE0C02 /* manifest.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = manifest.json; sourceTree = "<group>"; };
 		96F1ADB5A0FE75373E14B3EE /* ConversionHistory.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConversionHistory.swift; sourceTree = "<group>"; };
+		A1C0575600000000000015F1 /* icon.svg */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = icon.svg; sourceTree = "<group>"; };
 		A37C3C24384547982754F0EE /* Viaduct.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Viaduct.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		A67B80F0FD9B492A25C0D3E9 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		B940EB4254E642C973760112 /* ExtensionRenewer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ExtensionRenewer.swift; sourceTree = "<group>"; };
@@ -232,7 +232,6 @@
 						ProvisioningStyle = Automatic;
 					};
 					FF44307020060B6248DAED46 = {
-						DevelopmentTeam = "";
 						ProvisioningStyle = Automatic;
 					};
 				};
@@ -399,7 +398,7 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				MACOSX_DEPLOYMENT_TARGET = 13.0;
-				MARKETING_VERSION = 1.0.0;
+				MARKETING_VERSION = 1.0.1;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -488,7 +487,7 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				MACOSX_DEPLOYMENT_TARGET = 13.0;
-				MARKETING_VERSION = 1.0.0;
+				MARKETING_VERSION = 1.0.1;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
@@ -506,6 +505,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = Viaduct.entitlements;
 				COMBINE_HIDPI_IMAGES = YES;
+				DEVELOPMENT_TEAM = V8K8L3ZSD5;
 				ENABLE_HARDENED_RUNTIME = NO;
 				INFOPLIST_FILE = Info.plist;
 				INFOPLIST_KEY_NSPrincipalClass = NSApplication;
@@ -547,6 +547,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_ENTITLEMENTS = Viaduct.entitlements;
 				COMBINE_HIDPI_IMAGES = YES;
+				DEVELOPMENT_TEAM = V8K8L3ZSD5;
 				ENABLE_HARDENED_RUNTIME = NO;
 				INFOPLIST_FILE = Info.plist;
 				INFOPLIST_KEY_NSPrincipalClass = NSApplication;

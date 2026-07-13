@@ -46,21 +46,6 @@ Node.js is **not** required — the app bundles its own self-contained `node` un
 > and `open`, which the macOS App Sandbox forbids — so it ships unsandboxed and
 > is **not** a Mac App Store app. Distribute as a notarized direct download.
 
-## Build
-
-```sh
-# Option A: open the committed project
-open Viaduct.xcodeproj
-
-# Option B: regenerate from project.yml (needs xcodegen)
-xcodegen generate && open Viaduct.xcodeproj
-```
-
-The CLI ships prebuilt under `Resources/cli/`. On launch the app checks npm for a
-newer version and can update itself in place. A `Fetch Node` build phase downloads
-a self-contained `node` into `Resources/bin/` (gitignored) so the `.app` carries
-its own runtime.
-
 ## License
 
 MIT

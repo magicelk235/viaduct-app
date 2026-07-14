@@ -31,6 +31,7 @@ struct SettingsView: View {
                     cliCard
                     signingCard
                     historyCard
+                    supportCard
                 }
                 .padding(Theme.Space.xl)
             }
@@ -39,6 +40,41 @@ struct SettingsView: View {
     }
 
     // MARK: - Cards
+
+    private var supportCard: some View {
+        SettingsSection(title: "Support", symbol: "ladybug") {
+            Text("Something broken? Opens a GitHub issue pre-filled with your app version and the last error so it can be reproduced.")
+                .font(Theme.Font.caption())
+                .foregroundStyle(Theme.Colors.mute)
+            Button("Report a Bug") { NSWorkspace.shared.open(bugReportURL) }
+                .buttonStyle(.raycastTertiary)
+        }
+    }
+
+    /// GitHub new-issue URL with environment details pre-filled — one click
+    /// from "it broke" to a reproducible report.
+    private var bugReportURL: URL {
+        let app = Bundle.main
+            .object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "?"
+        var body = """
+        **What happened:**
+
+        **What I expected:**
+
+        ---
+        Viaduct \(app) · CLI \(vm.installedVersion)
+        \(ProcessInfo.processInfo.operatingSystemVersionString)
+        """
+        if let fail = vm.failureSummary {
+            body += "\n**Last error:** \(fail)"
+        }
+        var c = URLComponents(string: "https://github.com/magicelk235/viaduct-app/issues/new")!
+        c.queryItems = [
+            .init(name: "title", value: "Bug: "),
+            .init(name: "body", value: body),
+        ]
+        return c.url!
+    }
 
     private var interfaceCard: some View {
         SettingsSection(title: "Interface", symbol: "macwindow") {

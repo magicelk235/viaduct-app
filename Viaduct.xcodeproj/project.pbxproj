@@ -33,6 +33,7 @@
 		CBA72BAC72BC33E0C7C7B79D /* ConverterViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6EBFE922AB1245ED752C9321 /* ConverterViewModel.swift */; };
 		D498F700B216CEF067756D6A /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 614D8805DDE093D020F1D0D7 /* Theme.swift */; };
 		E200E4056A21FDD6CCE1D87F /* CLIUpdater.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5A6E1B55880A88354EC17F8F /* CLIUpdater.swift */; };
+		AA10BEEF0000000000000002 /* AppUpdateChecker.swift in Sources */ = {isa = PBXBuildFile; fileRef = AA10BEEF0000000000000001 /* AppUpdateChecker.swift */; };
 		E827408EA78A95108D5F62D2 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DF2B7969794EF0B93CC897FE /* SettingsView.swift */; };
 		EB7FA085A32BE26506778407 /* bin in Resources */ = {isa = PBXBuildFile; fileRef = 5B3B349223B937D244E01611 /* bin */; };
 		FB447A2CB916C3211D0E4B8D /* ExtensionInfo.swift in Sources */ = {isa = PBXBuildFile; fileRef = C7E0BBB8EEE9DC5F0962C0F7 /* ExtensionInfo.swift */; };
@@ -74,6 +75,7 @@
 		57EF2AA67C8160B7269036B6 /* LicenseManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LicenseManager.swift; sourceTree = "<group>"; };
 		58D150FB914882216A502FBE /* ViaductExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = ViaductExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		5A6E1B55880A88354EC17F8F /* CLIUpdater.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CLIUpdater.swift; sourceTree = "<group>"; };
+		AA10BEEF0000000000000001 /* AppUpdateChecker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppUpdateChecker.swift; sourceTree = "<group>"; };
 		5AE5FA1D49555608AC2C665D /* cli */ = {isa = PBXFileReference; lastKnownFileType = folder; name = cli; path = Resources/cli; sourceTree = SOURCE_ROOT; };
 		5B3B349223B937D244E01611 /* bin */ = {isa = PBXFileReference; lastKnownFileType = folder; name = bin; path = Resources/bin; sourceTree = SOURCE_ROOT; };
 		614D8805DDE093D020F1D0D7 /* Theme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Theme.swift; sourceTree = "<group>"; };
@@ -150,6 +152,7 @@
 				48578BB525C063A21AD9F40D /* AppMode.swift */,
 				09BE5C61C57681BCE4413B57 /* CLIRunner.swift */,
 				5A6E1B55880A88354EC17F8F /* CLIUpdater.swift */,
+				AA10BEEF0000000000000001 /* AppUpdateChecker.swift */,
 				EC951A109BC2D9F744B5551A /* ContentView.swift */,
 				96F1ADB5A0FE75373E14B3EE /* ConversionHistory.swift */,
 				CD24BC2D7FBDC2959615B2BD /* ConvertAnimations.swift */,
@@ -314,6 +317,7 @@
 				2B029B0B07AA19483E9DA8BB /* AppMode.swift in Sources */,
 				380DF86B2C777A78CFE2122E /* CLIRunner.swift in Sources */,
 				E200E4056A21FDD6CCE1D87F /* CLIUpdater.swift in Sources */,
+				AA10BEEF0000000000000002 /* AppUpdateChecker.swift in Sources */,
 				0523B4340A556E2FC8D07245 /* ContentView.swift in Sources */,
 				B87D25E00EF821C1EEF60240 /* ConversionHistory.swift in Sources */,
 				1EE76700C7DC11A36FAEE4BC /* ConvertAnimations.swift in Sources */,
@@ -398,7 +402,7 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				MACOSX_DEPLOYMENT_TARGET = 13.0;
-				MARKETING_VERSION = 1.0.3;
+				MARKETING_VERSION = 1.0.4;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -487,7 +491,7 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				MACOSX_DEPLOYMENT_TARGET = 13.0;
-				MARKETING_VERSION = 1.0.3;
+				MARKETING_VERSION = 1.0.4;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;

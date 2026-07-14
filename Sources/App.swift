@@ -71,6 +71,7 @@ struct ViaductApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
     @StateObject private var vm = ConverterViewModel()
     @StateObject private var license = LicenseManager.shared
+    @StateObject private var updates = AppUpdateChecker.shared
     @AppStorage("appMode") private var modeRaw = AppMode.user.rawValue
 
     private var mode: Binding<AppMode> {
@@ -108,11 +109,35 @@ struct ViaductApp: App {
             }
             .onAppear {
                 license.bootstrap(); vm.onLaunch()
+                AppUpdateChecker.shared.start()
                 InstallProgressBridge.shared.start()
                 InstallProgressBridge.shared.snapshot = { [weak vm] in
                     ViaductApp.progressSnapshot(vm)
                 }
                 AppDelegate.openURLHandler = { handleOpenURL($0) }
+            }
+            // New-version banner (GitHub Releases, checked daily). Dismiss ✕
+            // hides it until the next check finds a version.
+            .safeAreaInset(edge: .bottom, spacing: 0) {
+                if let update = updates.available {
+                    HStack(spacing: 12) {
+                        Text("Viaduct \(update.version) is available")
+                            .font(.callout.weight(.medium))
+                        Button("Download") { NSWorkspace.shared.open(update.url) }
+                            .buttonStyle(.borderedProminent)
+                            .controlSize(.small)
+                        Button {
+                            updates.available = nil
+                        } label: {
+                            Image(systemName: "xmark")
+                        }
+                        .buttonStyle(.plain)
+                        .foregroundStyle(.secondary)
+                    }
+                    .padding(.vertical, 8)
+                    .frame(maxWidth: .infinity)
+                    .background(.bar)
+                }
             }
             // Paywall: shown when an unlicensed user hits the free-quota wall.
             // Dismisses itself once activation flips the license to .licensed.

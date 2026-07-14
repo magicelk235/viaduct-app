@@ -20,6 +20,60 @@ function removeChromePromos() {
   }
 }
 
+// Pill styling for the button we inject ourselves (also reapplied after a
+// progress-card dismissal, which wipes inline styles).
+const VD_BTN_CSS =
+  'display:inline-flex;align-items:center;margin:10px 0;padding:10px 20px;' +
+  'background:#4A9DAD;color:#0A1A1E;border:none;border-radius:99px;' +
+  'font:600 14px/1 -apple-system,BlinkMacSystemFont,sans-serif;cursor:pointer;' +
+  // The title header is a grid; without these the button gets squeezed into
+  // a ~60px column and the label wraps.
+  'white-space:nowrap;width:max-content';
+
+// The store's client-side router omits its install button entirely on
+// non-Chrome browsers: the initial server-rendered HTML has one (we relabel
+// it), but SPA navigation re-renders the header without it, leaving nothing
+// to repurpose — the button "disappears" when browsing between extensions.
+// Inject our own below the title whenever a detail page has no button at all.
+// A surviving store button (relabeled or not) or live progress card, other
+// than `skip` (our own injected button).
+function storeInstallButton(skip) {
+  const phrases = ['add to safari', 'available on chrome', 'add to chrome', 'get chrome'];
+  for (const btn of document.querySelectorAll('button, [role="button"], a')) {
+    if (btn === skip) continue;
+    if (btn.dataset.vdProgress) return btn;
+    // Google keeps previous SPA views in the DOM inside display:none
+    // containers — their leftover buttons don't count as present.
+    if (!btn.offsetHeight) continue;
+    const text = (btn.textContent || '').toLowerCase().trim();
+    if (text.length < 60 && phrases.some(p => text.includes(p))) return btn;
+  }
+  return null;
+}
+
+function ensureInstallButton() {
+  const injected = document.querySelector('.vd-install');
+  // Never touch an injected button that became the live progress card.
+  if (injected && injected.dataset.vdProgress) return;
+  const onDetail = /\/detail\/[^/]+\/[a-z]{32}/.test(window.location.pathname);
+  const store = storeInstallButton(injected);
+  // A hidden injected button sits in a dead SPA view — stale, replace it.
+  const keep = onDetail && !store && injected && injected.offsetHeight > 0;
+  if (injected && !keep) injected.remove();
+  if (!onDetail || store || keep) return;
+  // Anchor on the visible title, not the first <h1> (that can be a dead view).
+  const h1 = [...document.querySelectorAll('h1')].find(el => el.offsetHeight > 0);
+  if (!h1) return; // header not rendered yet; the next mutation tick retries
+  const btn = document.createElement('button');
+  btn.className = 'vd-install';
+  btn.textContent = 'Add to Safari';
+  btn.style.cssText = VD_BTN_CSS;
+  h1.insertAdjacentElement('afterend', btn);
+  // An install is running for this page and the SPA dropped the node that was
+  // showing progress — the fresh button becomes the progress card.
+  if (installState && window.location.pathname === installState.path) renderProgress(btn);
+}
+
 function enableInstallButton() {
   const buttons = document.querySelectorAll('button, [role="button"], a');
   for (const btn of buttons) {
@@ -79,6 +133,7 @@ function enableInstallButton() {
 // handled without a manual reload.
 function apply() {
   enableInstallButton();
+  ensureInstallButton();
   removeChromePromos();
 }
 
@@ -207,6 +262,12 @@ function dismissProgress() {
     } else {
       // SPA replaced the node mid-install; no saved markup for this one.
       btn.textContent = 'Add to Safari';
+    }
+    if (btn.classList.contains('vd-install')) {
+      // Our injected button has no store CSS classes — inline styles are all
+      // it has, and the cssText reset above just wiped them.
+      btn.style.cssText = VD_BTN_CSS;
+      return;
     }
     btn.style.pointerEvents = 'auto';
     btn.style.setProperty('background', '#4A9DAD', 'important');

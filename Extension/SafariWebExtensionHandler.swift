@@ -49,7 +49,9 @@ public class SafariWebExtensionHandler: NSObject, NSExtensionRequestHandling {
         center.postNotificationName(Self.requestNote, object: nil, userInfo: nil,
                                     deliverImmediately: true)
         // App not running / not listening → tell the page instead of hanging.
-        DispatchQueue.global().asyncAfter(deadline: .now() + 1.0) {
+        // 2s, not 1s: the appex is spawned cold per request, and the
+        // notification round trip can straggle past a tight budget.
+        DispatchQueue.global().asyncAfter(deadline: .now() + 2.0) {
             finish(["state": "unreachable"])
         }
     }

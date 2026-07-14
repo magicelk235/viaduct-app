@@ -189,7 +189,7 @@ document.addEventListener('click', (e) => {
 // lives in `installState` and enableInstallButton() re-adopts any reset button.
 
 let installState = null; // { path, title, sub, fraction, color }
-let pollTimer = null;
+let pollGen = 0; // bumping cancels any in-flight polling loop
 // Original button markup, saved before we replace it with the progress card.
 // Restoring innerHTML (not textContent) keeps Google's font-bearing spans, so
 // the button doesn't fall back to a generic font after dismissal.
@@ -284,12 +284,11 @@ function setState(title, sub, fraction, color) {
 }
 
 function stopProgressPolling() {
-  clearInterval(pollTimer);
-  pollTimer = null;
+  pollGen++;
 }
 
 function startProgressPolling(btn) {
-  stopProgressPolling();
+  const gen = ++pollGen;
   installState = { path: window.location.pathname };
   setState('Contacting Viaduct…', 'Launching the converter', 0.04, '#4A9DAD');
   if (btn) renderProgress(btn);
@@ -298,20 +297,28 @@ function startProgressPolling(btn) {
   // its last phase until the new install resets it), so ignore done/failed
   // until we've seen this run actually working.
   let sawActivity = false;
-  pollTimer = setInterval(async () => {
+  let lastError = '';
+
+  // Sequential loop, not setInterval: the native handler is spawned cold for
+  // every poll and can take well over a second end to end. Overlapping ticks
+  // with a tight race timeout read as "unreachable" even when the chain works.
+  const tick = async () => {
+    if (gen !== pollGen) return;
     let state = null;
     try {
       // Race a timeout: if anything along content -> background -> native ->
       // app stalls, sendMessage's promise may never settle, and an await with
-      // no timeout would wedge every tick at "Contacting…" forever.
+      // no timeout would wedge the loop at "Contacting…" forever.
       const req = browser.runtime.sendMessage({ type: 'viaduct-progress' });
       req.catch(() => {});
       state = await Promise.race([
         req,
-        new Promise(resolve => setTimeout(() => resolve(null), 700)),
+        new Promise(resolve => setTimeout(() => resolve(null), 2500)),
       ]);
     } catch (e) { /* background asleep; try next tick */ }
+    if (gen !== pollGen) return;
     const s = state && state.state;
+    if (state && state.error) lastError = state.error;
     const elapsed = Date.now() - startedAt;
 
     if (s === 'active') {
@@ -320,18 +327,22 @@ function startProgressPolling(btn) {
                Math.max(0.04, state.fraction || 0), '#4A9DAD');
     } else if (s === 'done' && sawActivity) {
       setState('Installed ✓', 'Enable it in Safari → Settings → Extensions', 1, '#4A9DAD');
-      stopProgressPolling();
+      return;
     } else if (s === 'failed' && (sawActivity || elapsed > 10000)) {
       setState('Install failed', state.message || 'Open Viaduct for details.', 1, '#F87171');
-      stopProgressPolling();
+      return;
     } else if (!sawActivity && elapsed > 30000) {
       setState('Install failed',
-               "Couldn't reach Viaduct — open the app to see what happened.", 1, '#F87171');
-      stopProgressPolling();
+               lastError ? `Couldn't reach Viaduct: ${lastError}`
+                         : "Couldn't reach Viaduct — open the app to see what happened.",
+               1, '#F87171');
+      return;
     } else if (elapsed > 20 * 60 * 1000) {
       setState('Still working…',
                'Taking unusually long — open Viaduct to check on it.', 1, '#FBBF24');
-      stopProgressPolling();
+      return;
     }
-  }, 800);
+    setTimeout(tick, 800);
+  };
+  tick();
 }

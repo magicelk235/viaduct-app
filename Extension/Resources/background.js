@@ -7,7 +7,10 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message && message.type === 'viaduct-progress') {
     browser.runtime
       .sendNativeMessage('com.magicelk235.viaduct.Extension', { type: 'progress' })
-      .then(sendResponse, () => sendResponse({ state: 'unreachable' }));
+      .then(sendResponse,
+            // Pass the real failure through — the page shows it after repeated
+            // misses, which beats debugging a generic "couldn't reach".
+            (e) => sendResponse({ state: 'unreachable', error: String((e && e.message) || e) }));
     return true;
   }
 });

@@ -47,4 +47,12 @@ killall Viaduct 2>/dev/null || true
 rm -rf "$DEST"
 ditto "$APP" "$DEST"
 codesign --verify --deep "$DEST"
+
+# Delete the build-dir copy: it's a second signed bundle with the same bundle
+# id, and Safari/pluginkit can bind the extension to IT instead of $DEST —
+# then the next rebuild rm-rf's it and the store-page progress bridge dies
+# with a wedged appex. One bundle id, one bundle on disk.
+rm -rf "$APP"
+/System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister \
+  -f "$DEST" >/dev/null 2>&1 || true
 echo "==> Done: $DEST"

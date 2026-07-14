@@ -31,6 +31,15 @@ final class ConverterViewModel: ObservableObject {
     /// Drives the honest "install Xcode" card instead of a silent build failure.
     @Published var needsXcode = false
 
+    /// Set when converting would fall back to ad-hoc signing (no Apple account
+    /// in Xcode). Drives a pre-convert warning instead of letting the extension
+    /// silently vanish on the next Safari quit.
+    @Published var showAdhocWarning = false
+
+    /// User saw the ad-hoc warning and chose to convert anyway — don't nag on
+    /// every conversion after an informed choice.
+    @AppStorage("adhocAcknowledged") var adhocAcknowledged = false
+
     /// Chrome Web Store id of the install in flight (store flow only). Stamped
     /// onto the history record so auto-renew can re-download the source by id.
     var pendingStoreId: String?
@@ -176,6 +185,16 @@ final class ConverterViewModel: ObservableObject {
             return
         }
 
+        // The CLI silently falls back to ad-hoc signing when Xcode has no Apple
+        // account — and Safari disables ad-hoc extensions on every quit. Warn
+        // up front instead of letting the extension quietly vanish later.
+        if !adhocAcknowledged, !Self.xcodeTeamPresent() {
+            // Surface the alert even for headless viaduct:// installs.
+            NSApp.activate(ignoringOtherApps: true)
+            showAdhocWarning = true
+            return
+        }
+
         installedAppPath = nil
         failureSummary = nil
         lastReachedTrackPhase = nil
@@ -203,6 +222,25 @@ final class ConverterViewModel: ObservableObject {
         pendingStoreId = nil
         // Count this against the free quota (no-op once licensed).
         LicenseManager.shared.recordFreeConversion()
+    }
+
+    /// True when Xcode has a signed-in Apple account with a team — mirrors the
+    /// CLI's detectXcodeTeam() (packager.js): same defaults key, same pattern,
+    /// so the warning fires exactly when the CLI would fall back to ad-hoc.
+    static func xcodeTeamPresent() -> Bool {
+        let p = Process()
+        p.executableURL = URL(fileURLWithPath: "/usr/bin/defaults")
+        p.arguments = ["read", "com.apple.dt.Xcode", "IDEProvisioningTeamByIdentifier"]
+        let pipe = Pipe()
+        p.standardOutput = pipe
+        p.standardError = Pipe()
+        do { try p.run() } catch { return false }
+        p.waitUntilExit()
+        guard p.terminationStatus == 0 else { return false }
+        let out = String(data: pipe.fileHandleForReading.readDataToEndOfFile(),
+                         encoding: .utf8) ?? ""
+        return out.range(of: #"teamID\s*=\s*"?[A-Z0-9]{10}"?"#,
+                         options: .regularExpression) != nil
     }
 
     /// The honest, actionable message shown when full Xcode is missing. Stated

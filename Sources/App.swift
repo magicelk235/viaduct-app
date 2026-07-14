@@ -139,6 +139,36 @@ struct ViaductApp: App {
                     .background(.bar)
                 }
             }
+            // Pre-convert warning: no Apple account in Xcode means ad-hoc
+            // signing, which Safari disables on every quit. Asked once;
+            // "Convert Anyway" remembers the choice. Every button leaves the
+            // flow in a terminal state — a store-page progress card polling us
+            // must never be left spinning on an abandoned conversion.
+            .alert("No Apple account in Xcode", isPresented: $vm.showAdhocWarning) {
+                Button("Convert Anyway") {
+                    vm.adhocAcknowledged = true
+                    vm.userConvert()
+                }
+                Button("Open Xcode") {
+                    NSWorkspace.shared.open(URL(fileURLWithPath: "/Applications/Xcode.app"))
+                    vm.failureSummary = "Sign into Xcode (Settings → Accounts) with any free Apple ID, then try the install again."
+                    vm.phase = .failed
+                }
+                Button("Cancel", role: .cancel) {
+                    vm.failureSummary = "Install cancelled."
+                    vm.phase = .failed
+                }
+            } message: {
+                Text("""
+                Viaduct couldn't find an Apple Developer team in Xcode, so this \
+                extension would be signed ad-hoc — Safari turns ad-hoc extensions \
+                off every time it quits, and you'd have to re-enable them in the \
+                Develop menu after each restart.
+
+                For extensions that stay enabled, sign into Xcode with any free \
+                Apple ID (Xcode → Settings → Accounts), then convert again.
+                """)
+            }
             // Paywall: shown when an unlicensed user hits the free-quota wall.
             // Dismisses itself once activation flips the license to .licensed.
             .sheet(isPresented: $vm.showPaywall) {
@@ -206,6 +236,11 @@ struct ViaductApp: App {
             return ["state": "failed",
                     "message": "Free conversions used up — open Viaduct to go Pro, then try again."]
         }
+        if vm.showAdhocWarning {
+            return ["state": "active", "fraction": 0.04,
+                    "title": "Waiting for you",
+                    "subtitle": "Decide in the Viaduct window"]
+        }
         switch vm.phase {
         case .failed:
             return ["state": "failed",
@@ -235,6 +270,9 @@ struct ViaductApp: App {
             do {
                 let finalURL = try await ChromeStore.downloadCRX(id: extensionId)
                 await MainActor.run {
+                    // Download over — never leave the flag stuck on a flow that
+                    // stops before the convert phases start (e.g. ad-hoc alert).
+                    InstallProgressBridge.shared.downloading = false
                     modeRaw = AppMode.user.rawValue
                     vm.resetUserFlow()
                     vm.selectInput(path: finalURL.path)
@@ -249,6 +287,7 @@ struct ViaductApp: App {
                 }
             } catch {
                 await MainActor.run {
+                    InstallProgressBridge.shared.downloading = false
                     modeRaw = AppMode.user.rawValue
                     vm.failureSummary = (error as? ChromeStore.DownloadError)?.errorDescription
                         ?? "Failed to download extension: \(error.localizedDescription)"

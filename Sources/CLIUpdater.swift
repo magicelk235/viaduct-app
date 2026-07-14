@@ -1,4 +1,5 @@
 import Foundation
+import CryptoKit
 
 /// Keeps the viaduct CLI current by pulling the published npm package.
 /// npm ships a prebuilt `dist/`, so updating is download + extract + atomic
@@ -35,7 +36,7 @@ final class CLIUpdater {
     }
 
     private struct DistTags: Decodable { let latest: String }
-    private struct VersionDist: Decodable { let tarball: String }
+    private struct VersionDist: Decodable { let tarball: String; let integrity: String }
     private struct PackageDoc: Decodable {
         let distTags: DistTags
         let versions: [String: VersionRecord]
@@ -106,6 +107,13 @@ final class CLIUpdater {
         let tarball = work.appendingPathComponent("pkg.tgz")
         try fm.moveItem(at: tmpFile, to: tarball)
 
+        // 1b. Verify the tarball against the registry's `integrity` (sha512-<base64>)
+        // before touching it. npm serves package docs and tarballs from separate
+        // paths; matching the hash closes tarball-swap / cache-poisoning where the
+        // JSON doc is authentic but the .tgz is not. (Full-response MITM that also
+        // rewrites `integrity` is out of scope — TLS is the defense there.)
+        try Self.verifyIntegrity(fileAt: tarball, expected: rec.dist.integrity)
+
         // 2. Extract. npm tarballs unpack under a top-level `package/` dir.
         log("Extracting…")
         try runProcess("/usr/bin/tar", ["xzf", tarball.path, "-C", work.path], log: log)
@@ -136,6 +144,22 @@ final class CLIUpdater {
         try fm.moveItem(at: staging, to: target)
 
         log("Updated to \(latest).")
+    }
+
+    // MARK: - Integrity check
+
+    /// Throw unless the SHA-512 of `fileAt` matches npm's `sha512-<base64>` string.
+    static func verifyIntegrity(fileAt url: URL, expected: String) throws {
+        guard let b64 = expected.split(separator: "-", maxSplits: 1).last.map(String.init),
+              expected.hasPrefix("sha512-"),
+              let expectedDigest = Data(base64Encoded: b64) else {
+            throw UpdateError.download("unrecognized integrity: \(expected)")
+        }
+        let data = try Data(contentsOf: url)   // tarball is a few hundred KB
+        let actual = Data(SHA512.hash(data: data))
+        guard actual == expectedDigest else {
+            throw UpdateError.download("tarball integrity mismatch — refusing to install")
+        }
     }
 
     // MARK: - Semver compare (a < b)

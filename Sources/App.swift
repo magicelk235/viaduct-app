@@ -233,8 +233,11 @@ struct ViaductApp: App {
     private static func progressSnapshot(_ vm: ConverterViewModel?) -> [String: Any] {
         guard let vm else { return ["state": "idle"] }
         if vm.showPaywall {
-            return ["state": "failed",
-                    "message": "Free conversions used up — open Viaduct to go Pro, then try again."]
+            // Reason kept generic on purpose: this snapshot is broadcast on a
+            // system-wide DistributedNotificationCenter (unauthenticated — any
+            // local process can read it), so it must never leak license/trial
+            // state. The full reason shows only in the app window.
+            return ["state": "failed", "message": "Open Viaduct to continue."]
         }
         if vm.showAdhocWarning {
             return ["state": "active", "fraction": 0.04,

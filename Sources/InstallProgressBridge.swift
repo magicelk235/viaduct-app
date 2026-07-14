@@ -8,6 +8,12 @@ import AppKit
 /// posts a request notification per poll and we reply with a JSON snapshot on
 /// the distributed notification center (unsandboxed sender may attach the
 /// `object` string; the sandboxed appex may receive it).
+///
+/// SECURITY: DistributedNotificationCenter is a system-wide, unauthenticated
+/// bus — any local process can post `requestNote` and read the `stateNote`
+/// reply. There is no way to authenticate the appex over it, so the snapshot
+/// (see `ViaductApp.progressSnapshot`) MUST carry only non-sensitive progress
+/// state: no filesystem paths, no license/trial specifics, no secrets.
 final class InstallProgressBridge {
     static let shared = InstallProgressBridge()
 

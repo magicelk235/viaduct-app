@@ -42,7 +42,8 @@ Pro-gated, default-off toggle.
 |---|---|
 | Control | A single Settings toggle, **default OFF** |
 | Toggle OFF | **Zero extra CWS traffic** — no version polling, no badges. Behavior identical to today. |
-| Toggle ON | **Silent auto-apply** — new version rebuilds + reinstalls on the daily tick, like auto-renew. No click, no prompt. |
+| Toggle ON | **Silent auto-apply** — new version rebuilds + reinstalls, like auto-renew. No click, no prompt. |
+| Cadence | **Weekly** (7 days), not daily. Upstream versions change rarely; weekly cuts CWS traffic 7×. Independent of auto-renew's daily timer. |
 | Gating | **Pro-only**, mirroring auto-renew (`autoRenew` is licensed-only). |
 
 ## Non-goals (YAGNI)
@@ -67,6 +68,11 @@ Add to `ConversionRecord`:
 /// Auto-update compares the latest CWS manifest against this to decide whether
 /// to rebuild. Optional so old records still decode.
 var version: String?
+
+/// Last time auto-update polled the CWS for this record. Gates the weekly
+/// cadence: skip records checked within the last 7 days. Optional so old
+/// records decode (nil → check on next pass).
+var lastUpdateCheck: Date?
 ```
 
 Thread it through `add(...)` (new optional param, default `nil`) and add a
@@ -107,6 +113,18 @@ Add an `updateIfNeeded()` entry point parallel to `renewIfNeeded()`:
 - Reuses the existing single-flight (`running`, `runner.isRunning`) guard so an
   update and a renew never run concurrently.
 - Silent, best-effort, same failure notification path.
+- **Runs on a weekly cadence.** Because `updateIfNeeded()` shares the
+  single-flight guard with renew, it's safe to call it from the same launch hook
+  as renew, but it must not re-poll CWS on every daily renew tick. Gate the
+  actual CWS download on a persisted "last update check" timestamp: skip any
+  record checked within the last 7 days.
+
+**Where the 7-day gate lives:** per-record, on the `ConversionRecord`. Add
+`lastUpdateCheck: Date?`. `updateIfNeeded()` only downloads the `.crx` for
+records whose `lastUpdateCheck` is nil or older than 7 days, and stamps it after
+each check (hit or miss). This survives relaunches (persisted in history) and
+naturally staggers records that were installed at different times, instead of a
+single global timer that would re-check everything at once.
 
 **Version comparison:** exact string inequality (`latest != stored`), not
 semver-less. Chrome versions are monotonic on the store; if the string differs,
@@ -124,6 +142,10 @@ The only new logic is "download crx → read manifest version → compare".
   `renewer.renewIfNeeded()`, call `renewer.updateIfNeeded()` when
   `autoUpdateEnabled`. The daily timer body does the same. **When
   `autoUpdate` is off, `updateIfNeeded()` is never called → no CWS traffic.**
+  The daily *invocation* is harmless: the per-record 7-day `lastUpdateCheck`
+  gate inside `updateIfNeeded()` means a record is actually polled at most once a
+  week regardless of how often the method is called. No separate timer needed —
+  reuse the existing daily renew timer, let the gate enforce weekly.
 
 The login-item / relaunch-at-login logic already exists for auto-renew and
 covers auto-update for free (same daily timer).
@@ -142,8 +164,8 @@ Toggle("Auto-update extensions from the Chrome Web Store",
 ```
 
 Caption: "When an extension you installed from the Chrome Web Store ships a new
-version, Viaduct rebuilds and reinstalls it automatically. Off by default;
-store-page installs only." Optionally show the tracked `version` in each history
+version, Viaduct rebuilds and reinstalls it automatically (checked weekly). Off
+by default; store-page installs only." Optionally show the tracked `version` in each history
 row.
 
 ## Data flow
@@ -153,7 +175,9 @@ daily tick / launch  (only if autoUpdateEnabled)
       │
       ▼
 updateIfNeeded()  →  for each record with storeId:
-      │                 downloadCRX(storeId) → read manifest version
+      │                 lastUpdateCheck within 7 days? → skip (weekly gate)
+      │                 else: downloadCRX(storeId) → read manifest version
+      │                 stamp lastUpdateCheck
       │                 version != record.version ?
       │                        │yes                 │no
       │                        ▼                    ▼
@@ -170,11 +194,11 @@ updateIfNeeded()  →  for each record with storeId:
 - **CWS ToS / rate-limiting (primary risk, not code).** Downloading `.crx` from
   `clients2.google.com/service/update2/crx` violates Chrome Web Store ToS and the
   endpoint can be rate-limited or blocked. Viaduct already hits it for
-  store-installs and renew, so this adds no *new* legal surface — but daily
-  polling of every store extension sustains automated traffic. **Mitigated by
-  default-off:** no polling happens unless the user opts in. Consider a modest
-  cap / spacing if a user has many store installs (out of scope for v1;
-  `ponytail:` note it in code).
+  store-installs and renew, so this adds no *new* legal surface — but automated
+  polling of every store extension sustains traffic. **Mitigated by default-off
+  AND the weekly (not daily) per-record cadence:** no polling unless opted in,
+  and at most one poll per extension per week. Consider a modest cap / spacing if
+  a user has many store installs (out of scope for v1; `ponytail:` note in code).
 - **Bad upstream version lands silently.** Silent auto-apply means a broken new
   upstream version reinstalls without a prompt. Acceptable: it mirrors how Chrome
   itself auto-updates extensions, and the user opted in. Failure (not
@@ -189,12 +213,25 @@ updateIfNeeded()  →  for each record with storeId:
   `downloadCRX`).
 - Version unchanged → no rebuild. Version changed → exactly one rebuild +
   `markUpdated`.
+- Weekly gate: record with `lastUpdateCheck` < 7 days ago → skipped, zero
+  network calls. `lastUpdateCheck` nil or > 7 days → polled once, then stamped.
 - Non-store record (`storeId == nil`) → skipped by the update pass.
 - Free (unlicensed) → `autoUpdateEnabled == false` → skipped even if the flag is
   flipped in defaults.
+
+## Website (after ship)
+
+Once the feature ships in a release, add it to the public site in the sibling
+repo `../magicelk235.github.io/viaduct/` (landing page). As a Pro feature line
+alongside auto-renew — e.g. under the Pro/features list: "Auto-update installed
+extensions from the Chrome Web Store (weekly, Pro)." Separate commit in that
+repo, done after the app release is out so the site never advertises an unshipped
+feature.
 
 ## Effort
 
 ~40–60 lines net across 5 existing files. No new dependencies, no new network
 codepath (reuses `ChromeStore.downloadCRX`), no new CLI path (reuses the
-`.autoTeam` rebuild). One new struct field, one new flag, one new toggle.
+`.autoTeam` rebuild). Two new record fields (`version`, `lastUpdateCheck`), one
+new flag, one new toggle. Plus a follow-up website edit in the sibling repo after
+release.

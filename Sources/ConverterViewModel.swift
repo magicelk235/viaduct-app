@@ -57,6 +57,14 @@ final class ConverterViewModel: ObservableObject {
     /// can't keep renewing by flipping the persisted flag some other way.
     var autoRenewEnabled: Bool { autoRenew && LicenseManager.shared.isLicensed }
 
+    /// Auto-update installed store extensions when the Chrome Web Store ships a
+    /// newer version. Off by default — it polls the CWS, so it's opt-in. Pro-only.
+    @AppStorage("autoUpdate") var autoUpdate = false
+
+    /// Same license gate as auto-renew: a free user can't enable CWS polling by
+    /// flipping the persisted flag.
+    var autoUpdateEnabled: Bool { autoUpdate && LicenseManager.shared.isLicensed }
+
     private let runner = CLIRunner.shared
     private let updater = CLIUpdater.shared
     private lazy var renewer = ExtensionRenewer(history: history)
@@ -80,13 +88,17 @@ final class ConverterViewModel: ObservableObject {
         // Relaunch at login so the daily renew timer survives reboots — auto-renew
         // is worthless if the app isn't running when the 7-day window closes.
         syncLoginItem()
-        guard autoRenewEnabled else { return }
-        renewer.renewIfNeeded()
+        // Auto-update shares the renew timer; its own per-record weekly gate keeps
+        // CWS polling to at most once/week regardless of the daily tick.
+        guard autoRenewEnabled || autoUpdateEnabled else { return }
+        if autoRenewEnabled { renewer.renewIfNeeded() }
+        if autoUpdateEnabled { renewer.updateIfNeeded() }
         guard renewTimer == nil else { return }
         renewTimer = Timer.scheduledTimer(withTimeInterval: 24 * 3600, repeats: true) { [weak self] _ in
             Task { @MainActor in
-                guard let self, self.autoRenewEnabled, !self.isRunning else { return }
-                self.renewer.renewIfNeeded()
+                guard let self, !self.isRunning else { return }
+                if self.autoRenewEnabled { self.renewer.renewIfNeeded() }
+                if self.autoUpdateEnabled { self.renewer.updateIfNeeded() }
             }
         }
     }
@@ -105,7 +117,9 @@ final class ConverterViewModel: ObservableObject {
     /// ponytail: SMAppService.mainApp — no separate helper bundle/plist to maintain.
     func syncLoginItem() {
         do {
-            if autoRenewEnabled {
+            // Either background feature needs the app relaunched at login so its
+            // daily timer survives reboots.
+            if autoRenewEnabled || autoUpdateEnabled {
                 if SMAppService.mainApp.status != .enabled { try SMAppService.mainApp.register() }
             } else {
                 if SMAppService.mainApp.status == .enabled { try SMAppService.mainApp.unregister() }
@@ -218,7 +232,7 @@ final class ConverterViewModel: ObservableObject {
         history.add(name: name, sourcePath: archived ?? options.inputPath,
                     appName: options.appName,
                     installedPath: installedAppPath, iconData: extInfo?.icon?.pngData(),
-                    storeId: pendingStoreId)
+                    storeId: pendingStoreId, version: extInfo?.version)
         pendingStoreId = nil
         // Count this against the free quota (no-op once licensed).
         LicenseManager.shared.recordFreeConversion()

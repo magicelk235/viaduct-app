@@ -200,6 +200,19 @@ struct SettingsView: View {
             Text("Free Apple accounts sign extensions for ~7 days. This rebuilds and re-signs your installed extensions before that lapses, so Safari never drops them. Uses the Apple identity from Xcode automatically.")
                 .font(Theme.Font.caption())
                 .foregroundStyle(Theme.Colors.mute)
+
+            Divider().overlay(Theme.Colors.hairlineSoft)
+
+            Toggle("Auto-update extensions from the Chrome Web Store",
+                   isOn: licensed
+                       ? $vm.autoUpdate
+                       : .constant(false))
+                .toggleStyle(.glass)
+                .disabled(!licensed)
+                .onChange(of: vm.autoUpdate) { _ in vm.startAutoRenew() }
+            Text("When an extension you installed from the Chrome Web Store ships a new version, Viaduct rebuilds and reinstalls it automatically (checked weekly). Off by default; store-page installs only.")
+                .font(Theme.Font.caption())
+                .foregroundStyle(Theme.Colors.mute)
             if !licensed {
                 // Settings is its own window; the activation sheet lives on the
                 // main window. Just send them to buy — converting again surfaces

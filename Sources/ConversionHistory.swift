@@ -24,10 +24,22 @@ struct ConversionRecord: Codable, Identifiable {
     /// the .crx if the archived source vanishes (cache purge, failed archive).
     var storeId: String?
 
+    /// Upstream extension version (manifest "version") at build time. Auto-update
+    /// compares the latest CWS manifest against this to decide whether to rebuild.
+    /// Optional so old records still decode (nil → "unknown", adopt live version).
+    var version: String?
+
+    /// Last time auto-update polled the CWS for this record. Gates the weekly
+    /// cadence: skip records checked within the last 7 days. Optional so old
+    /// records decode (nil → check on next pass).
+    var lastUpdateCheck: Date?
+
     /// Effective app name for rebuilds.
     var resolvedAppName: String { appName ?? name }
     /// When this build's free-account signature is assumed to lapse (7 days).
-    var expiresAt: Date { (lastSigned ?? date).addingTimeInterval(7 * 24 * 3600) }
+    var expiresAt: Date { (lastSigned ?? date).addingTimeInterval(RenewalPolicy.signatureLifetime) }
+    /// Last time this build was (re)signed — the once-a-week renew cap keys off this.
+    var lastBuild: Date { lastSigned ?? date }
 }
 
 /// Append-only history of converted extensions, backed by UserDefaults.
@@ -42,12 +54,13 @@ final class ConversionHistory: ObservableObject {
     init() { load() }
 
     func add(name: String, sourcePath: String, appName: String,
-             installedPath: String?, iconData: Data?, storeId: String? = nil) {
+             installedPath: String?, iconData: Data?, storeId: String? = nil,
+             version: String? = nil) {
         let now = Date()
         let record = ConversionRecord(name: name, sourcePath: sourcePath,
                                       appName: appName, installedPath: installedPath,
                                       date: now, lastSigned: now, iconData: iconData,
-                                      storeId: storeId)
+                                      storeId: storeId, version: version)
         // Re-converting the same app replaces its record instead of stacking duplicates.
         records.removeAll { $0.resolvedAppName == appName }
         records.insert(record, at: 0)
@@ -63,6 +76,29 @@ final class ConversionHistory: ObservableObject {
         records[i].lastRenewAttempt = now
         records[i].lastRenewFailed = false
         if let p = installedPath { records[i].installedPath = p }
+        save()
+    }
+
+    /// Stamp a record after a successful auto-update: new upstream version built.
+    /// An update is also a fresh sign, so lastSigned advances too (resets expiry
+    /// and the once-a-week renew cap). Also stamps the update-check timestamp.
+    func markUpdated(id: ConversionRecord.ID, version: String, installedPath: String?) {
+        guard let i = records.firstIndex(where: { $0.id == id }) else { return }
+        let now = Date()
+        records[i].version = version
+        records[i].lastSigned = now
+        records[i].lastUpdateCheck = now
+        records[i].lastRenewAttempt = now
+        records[i].lastRenewFailed = false
+        if let p = installedPath { records[i].installedPath = p }
+        save()
+    }
+
+    /// Record that we polled the CWS for this extension (whether or not the
+    /// version changed). Drives the weekly poll cadence.
+    func stampUpdateCheck(id: ConversionRecord.ID) {
+        guard let i = records.firstIndex(where: { $0.id == id }) else { return }
+        records[i].lastUpdateCheck = Date()
         save()
     }
 

@@ -5,6 +5,8 @@ import AppKit
 struct ExtensionInfo {
     var name: String
     var icon: NSImage?
+    /// manifest "version" — recorded so auto-update can compare against the CWS.
+    var version: String?
 }
 
 extension NSImage {
@@ -64,7 +66,8 @@ enum ExtensionInspector {
                              defaultLocale: obj["default_locale"] as? String,
                              fallback: fallback)
         let icon = loadIcon(from: obj, base: base)
-        return ExtensionInfo(name: name, icon: icon)
+        let version = (obj["version"] as? String)?.trimmingCharacters(in: .whitespaces)
+        return ExtensionInfo(name: name, icon: icon, version: version)
     }
 
     // MARK: - Archive

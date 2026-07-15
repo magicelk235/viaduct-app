@@ -76,12 +76,13 @@ final class ExtensionRenewer {
         } catch { return nil }
     }
 
-    /// Records whose signature is at/near expiry, and that we can still rebuild:
+    /// Records whose signature is at/near expiry, that haven't already been
+    /// rebuilt this week (the once-a-week cap), and that we can still rebuild:
     /// the source exists, or it's a store install we can re-download by id.
     private func dueForRenewal() -> [ConversionRecord] {
-        let cutoff = Date().addingTimeInterval(Self.renewWindow)
+        let now = Date()
         return history.records.filter { rec in
-            rec.expiresAt <= cutoff
+            RenewalPolicy.dueForRenewal(expiresAt: rec.expiresAt, lastBuild: rec.lastBuild, now: now)
             && (FileManager.default.fileExists(atPath: rec.sourcePath) || rec.storeId != nil)
         }
     }
@@ -101,6 +102,61 @@ final class ExtensionRenewer {
         }
     }
 
+    /// Store installs due for a weekly CWS version poll: has a storeId and hasn't
+    /// been checked in the last week. Local-source-only records have no upstream
+    /// to poll, so they're excluded.
+    private func dueForUpdateCheck() -> [ConversionRecord] {
+        let now = Date()
+        return history.records.filter { rec in
+            rec.storeId != nil
+            && RenewalPolicy.dueForUpdateCheck(lastCheck: rec.lastUpdateCheck, now: now)
+        }
+    }
+
+    /// Poll the CWS for newer versions of store installs and rebuild any that
+    /// changed. Silent, best-effort. The per-record weekly gate means this is a
+    /// no-op most days even though it's called on the daily tick. Auto-update
+    /// enablement is checked by the caller (ConverterViewModel).
+    func updateIfNeeded() {
+        guard !running, !runner.isRunning else { return }
+        history.pruneDeleted()
+        let due = dueForUpdateCheck()
+        guard !due.isEmpty else { return }
+        running = true
+        Task { @MainActor in
+            defer { running = false }
+            for rec in due { await update(rec) }
+        }
+    }
+
+    private func update(_ rec: ConversionRecord) async {
+        guard let sid = rec.storeId else { return }
+        // Poll the CWS. Any failure: stamp the check (don't retry until next week)
+        // and move on — a transient store hiccup shouldn't spin.
+        guard let crx = try? await ChromeStore.downloadCRX(id: sid) else {
+            history.stampUpdateCheck(id: rec.id)
+            return
+        }
+        let latest = ExtensionInspector.inspectSync(path: crx.path)?.version
+        // Couldn't read a version, or it's unchanged: just record the poll.
+        guard let latest, RenewalPolicy.versionChanged(stored: rec.version, latest: latest) else {
+            history.stampUpdateCheck(id: rec.id)
+            return
+        }
+        // New version — archive the fresh source and rebuild from it.
+        let sourcePath = Self.archiveSource(crx.path, appName: rec.resolvedAppName) ?? crx.path
+        history.updateSource(id: rec.id, path: sourcePath)
+        let code = await rebuild(sourcePath: sourcePath, appName: rec.resolvedAppName)
+        if code == 0 {
+            history.markUpdated(id: rec.id, version: latest, installedPath: rec.installedPath)
+        } else {
+            // Build failed: stamp the poll so we don't hammer it, and surface it.
+            history.stampUpdateCheck(id: rec.id)
+            history.markRenewFailed(id: rec.id)
+            notifyFailure(rec)
+        }
+    }
+
     private func renew(_ rec: ConversionRecord) async {
         var sourcePath = rec.sourcePath
         // Archived source vanished (cache purge, failed archive)? Store installs
@@ -116,14 +172,27 @@ final class ExtensionRenewer {
             history.updateSource(id: rec.id, path: sourcePath)
         }
 
+        let code = await rebuild(sourcePath: sourcePath, appName: rec.resolvedAppName)
+        if code == 0 {
+            history.markRenewed(id: rec.id, installedPath: rec.installedPath)
+        } else {
+            history.markRenewFailed(id: rec.id)
+            notifyFailure(rec)
+        }
+    }
+
+    /// Run a full convert+install from source via the CLI, re-signing with the
+    /// auto-detected Apple team (re-mints the free-account 7-day profile). Shared
+    /// by renew and update — one rebuild codepath. Returns the CLI exit code.
+    private func rebuild(sourcePath: String, appName: String) async -> Int32 {
         var opts = ConvertOptions()
         opts.inputPath = sourcePath
-        opts.appName = rec.resolvedAppName
+        opts.appName = appName
         opts.install = true
         opts.signing = .autoTeam   // re-mint the Apple-issued dev signature
-        opts.force = true          // never block a renew on advisory issues
+        opts.force = true          // never block a rebuild on advisory issues
 
-        let code: Int32 = await withCheckedContinuation { cont in
+        return await withCheckedContinuation { cont in
             do {
                 try runner.run(args: opts.conversionArgs(), onLine: { _ in }) { c in
                     cont.resume(returning: c)
@@ -131,12 +200,6 @@ final class ExtensionRenewer {
             } catch {
                 cont.resume(returning: -1)
             }
-        }
-        if code == 0 {
-            history.markRenewed(id: rec.id, installedPath: rec.installedPath)
-        } else {
-            history.markRenewFailed(id: rec.id)
-            notifyFailure(rec)
         }
     }
 

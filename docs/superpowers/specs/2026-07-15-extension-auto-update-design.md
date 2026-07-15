@@ -219,6 +219,40 @@ updateIfNeeded()  →  for each record with storeId:
 - Free (unlicensed) → `autoUpdateEnabled == false` → skipped even if the flag is
   flipped in defaults.
 
+## Adjacent: cap auto-renew to once per week
+
+Separate small tightening in the same `ExtensionRenewer`, folded into this work.
+
+**Today:** `dueForRenewal()` returns any record within 2 days of its 7-day
+signature expiry. That's *effectively* weekly, but nothing hard-stops a second
+rebuild inside the same week — a relaunch, a manual `renewNow()`, or an
+attempt whose `lastSigned` didn't advance can re-trigger a rebuild of an
+extension that was rebuilt days ago.
+
+**Change:** add a hard guard — skip any record rebuilt within the last 7 days.
+`ConversionRecord.lastSigned` already records the last successful re-sign, so:
+
+```swift
+private func dueForRenewal() -> [ConversionRecord] {
+    let cutoff = Date().addingTimeInterval(Self.renewWindow)   // near expiry
+    let minGap: TimeInterval = 7 * 24 * 3600                   // at most 1/week
+    return history.records.filter { rec in
+        let lastBuild = rec.lastSigned ?? rec.date
+        return rec.expiresAt <= cutoff
+            && Date().timeIntervalSince(lastBuild) >= minGap    // not rebuilt this week
+            && (FileManager.default.fileExists(atPath: rec.sourcePath) || rec.storeId != nil)
+    }
+}
+```
+
+**Not caching the built `.app` to skip rebuilds.** A free-account signature can
+only be re-minted by a fresh Xcode build — there's no standalone re-sign of a
+cached `.appex` with a free provisioning profile. The existing code already
+notes this (`a free-account profile can only be re-minted by an Xcode build
+anyway`). Caching the build would buy nothing for renew: we'd rebuild regardless.
+So the only lever is *frequency*, and weekly is already the floor the 7-day
+window allows — the guard just makes "once per week, never more" explicit.
+
 ## Website (after ship)
 
 Once the feature ships in a release, add it to the public site in the sibling

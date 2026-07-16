@@ -20,7 +20,7 @@ Report privately through one of:
 - **GitHub Security Advisories** — open a draft advisory at
   <https://github.com/magicelk235/viaduct-app/security/advisories/new>
   (preferred).
-- **Email** — yehonatan.2350@icloud.com with subject line `SECURITY: viaduct-app`.
+- **Email** — yehonatan.2350@gmail.com with subject line `SECURITY: viaduct-app`.
 
 Please include:
 

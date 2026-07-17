@@ -79,11 +79,15 @@ struct ViaductApp: App {
                 set: { modeRaw = $0.rawValue })
     }
 
-    /// Menu-bar glyph: the bundled brand mark (icon.svg → vector, crisp at any
-    /// size), rendered as a template so macOS tints it to the menu-bar's
-    /// adaptive light/dark color. Falls back to a system symbol if missing.
+    /// Menu-bar glyph: the bundled brand mark (icon.png), rendered as a template
+    /// so macOS tints it to the menu-bar's adaptive light/dark color. Falls back
+    /// to a system symbol if missing.
     static let menubarIcon: NSImage = {
-        let img = Bundle.main.url(forResource: "icon", withExtension: "svg")
+        // icon.png is what's bundled (project.yml). The old code asked for
+        // icon.svg — never bundled, and NSImage can't reliably render SVG — so
+        // it always fell through to the arrows symbol. isTemplate below renders
+        // it as an adaptive monochrome menu-bar mark.
+        let img = Bundle.main.url(forResource: "icon", withExtension: "png")
             .flatMap { NSImage(contentsOf: $0) }
             ?? NSImage(systemSymbolName: "arrow.triangle.2.circlepath",
                        accessibilityDescription: "Viaduct")!

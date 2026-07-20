@@ -48,4 +48,6 @@ Node.js is **not** required — the app bundles its own self-contained `node` un
 
 ## License
 
-MIT
+Licensed under the [PolyForm Shield License 1.0.0](LICENSE). Copyright (c) 2026
+Yehonatan Cohen (magicelk235). You may freely use, modify, and share it — but
+you may not use it to build a product that competes with Viaduct.

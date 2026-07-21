@@ -6,7 +6,7 @@
 // to /Applications. Output: dmg/dmg-bg.png at 2x (620x420 points).
 // Dark-only by choice: macOS 27 Finder does NOT live-swap a multi-rep DMG
 // background by appearance, so a single dark bg is the honest call.
-// ponytail: one-shot asset gen, run by make-dmg.sh.
+// One-shot asset gen, run by make-dmg.sh.
 import AppKit
 
 let W = 620.0, H = 420.0

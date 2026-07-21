@@ -6,7 +6,7 @@ options:
   createIntermediateGroups: true
 settings:
   base:
-    MARKETING_VERSION: "1.0.7"
+    MARKETING_VERSION: "1.0.8"
     CURRENT_PROJECT_VERSION: "1"
     SWIFT_VERSION: "5.0"
     DEVELOPMENT_TEAM: ""
@@ -46,7 +46,7 @@ targets:
     entitlements:
       path: Viaduct.entitlements
       properties:
-        # ponytail: NO app-sandbox. The app shells out to node/xcodebuild/lsregister/open;
+        # NO app-sandbox. The app shells out to node/xcodebuild/lsregister/open;
         # the sandbox blocks exec of those binaries entirely, breaking the whole pipeline.
         # MAS distribution was never viable for a tool that drives the dev toolchain.
         com.apple.security.app-sandbox: false

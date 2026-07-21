@@ -226,7 +226,13 @@ struct UserModeView: View {
     /// Name the step that failed, pulled from how far `phase` advanced before
     /// the CLI bailed. Falls back to a generic headline.
     private var failedHeadline: String {
-        if vm.needsXcode { return "One more thing: install Xcode" }
+        if vm.needsXcode {
+            switch vm.xcodeStatus {
+            case .notSelected:     return "Almost there: point macOS at Xcode"
+            case .setupIncomplete: return "Almost there: finish Xcode setup"
+            default:               return "One more thing: install Xcode"
+            }
+        }
         if let last = vm.lastReachedTrackPhase {
             return "Failed while \(last.title.lowercased())"
         }
@@ -266,18 +272,46 @@ struct UserModeView: View {
             }
 
         case .failed where vm.needsXcode:
-            // The honest Xcode gate: one clear primary action — install it.
+            // The honest Xcode gate — but the primary action now matches the
+            // actual problem, so "installed but still blocked" isn't a dead end.
             VStack(spacing: Theme.Space.sm) {
-                Button {
-                    Feedback.haptic(.generic)
-                    vm.openXcodeInstall()
-                } label: {
-                    Label("Install Xcode (free)", systemImage: "arrow.down.app")
-                        .frame(maxWidth: .infinity)
-                }
-                .buttonStyle(.raycastPrimary)
-                Button("I installed it — try again") { vm.resetUserFlow() }
+                switch vm.xcodeStatus {
+                case .notSelected:
+                    Button {
+                        Feedback.haptic(.generic)
+                        vm.fixXcodeSelection()
+                    } label: {
+                        Label("Point macOS at Xcode", systemImage: "wrench.and.screwdriver")
+                            .frame(maxWidth: .infinity)
+                    }
+                    .buttonStyle(.raycastPrimary)
+                    Button("Install a different Xcode") { vm.openXcodeInstall() }
+                        .buttonStyle(.raycastGhost)
+                case .setupIncomplete:
+                    Button {
+                        Feedback.haptic(.generic)
+                        vm.finishXcodeSetup()
+                    } label: {
+                        Label("Finish Xcode setup", systemImage: "wrench.and.screwdriver")
+                            .frame(maxWidth: .infinity)
+                    }
+                    .buttonStyle(.raycastPrimary)
+                    Button("Open Xcode") {
+                        NSWorkspace.shared.open(URL(fileURLWithPath: "/Applications/Xcode.app"))
+                    }
                     .buttonStyle(.raycastGhost)
+                default:
+                    Button {
+                        Feedback.haptic(.generic)
+                        vm.openXcodeInstall()
+                    } label: {
+                        Label("Install Xcode (free)", systemImage: "arrow.down.app")
+                            .frame(maxWidth: .infinity)
+                    }
+                    .buttonStyle(.raycastPrimary)
+                    Button("I installed it — try again") { vm.recheckXcode() }
+                        .buttonStyle(.raycastGhost)
+                }
             }
 
         case .failed:

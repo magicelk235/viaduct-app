@@ -91,6 +91,94 @@ final class CLIRunner {
         return p.terminationStatus == 0
     }
 
+    /// Why the build/sign pipeline can — or can't — run. This splits apart the
+    /// two very different failure modes that `xcodeReady()` alone collapses into
+    /// one: a genuinely missing Xcode, vs. an Xcode that IS installed but macOS
+    /// still isn't pointed at. The second is the notorious "I installed Xcode and
+    /// it STILL says install Xcode" trap — after an App Store install,
+    /// `xcode-select` can stay on the Command Line Tools, so `xcrun --find` fails
+    /// exactly as if Xcode weren't there. We detect that and fix it in one click.
+    enum XcodeStatus: Equatable {
+        case ready
+        case notInstalled                       // no Xcode.app anywhere on disk
+        case notSelected(developerDir: String)  // Xcode on disk, CLT/none active
+        case setupIncomplete                    // selected, first-launch pending
+    }
+
+    static func xcodeStatus() -> XcodeStatus {
+        if xcodeReady() { return .ready }
+        guard let dev = installedXcodeDeveloperDir() else { return .notInstalled }
+        if activeDeveloperDir() != dev { return .notSelected(developerDir: dev) }
+        return .setupIncomplete
+    }
+
+    /// Active developer dir (`xcode-select -p`), or nil if unset.
+    static func activeDeveloperDir() -> String? {
+        let out = runCapturing("/usr/bin/xcode-select", ["-p"])?
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+        return (out?.isEmpty ?? true) ? nil : out
+    }
+
+    /// Developer dir of a full Xcode installed on disk (never the Command Line
+    /// Tools), or nil if none is found. Prefers /Applications/Xcode.app, then
+    /// asks Spotlight for any Xcode bundle wherever the user put it.
+    static func installedXcodeDeveloperDir() -> String? {
+        let standard = "/Applications/Xcode.app/Contents/Developer"
+        if FileManager.default.fileExists(atPath: standard) { return standard }
+        guard let hit = runCapturing("/usr/bin/mdfind",
+                ["kMDItemCFBundleIdentifier == 'com.apple.dt.Xcode'"])?
+            .split(separator: "\n").first.map(String.init) else { return nil }
+        let dev = hit + "/Contents/Developer"
+        return FileManager.default.fileExists(atPath: dev) ? dev : nil
+    }
+
+    /// Point the active developer dir at `developerDir` via `xcode-select -s`,
+    /// shown to the user as the standard macOS admin-auth prompt. Returns true
+    /// once the selection actually resolves the Safari packager.
+    @discardableResult
+    static func selectXcode(developerDir: String) -> Bool {
+        _ = runAdmin("/usr/bin/xcode-select -s \(shellQuote(developerDir))")
+        return xcodeReady()
+    }
+
+    /// Accept the Xcode license and run its first-launch component install —
+    /// both need admin rights and otherwise block xcrun/xcodebuild.
+    @discardableResult
+    static func finishXcodeFirstLaunch() -> Bool {
+        _ = runAdmin("/usr/bin/xcodebuild -license accept; /usr/bin/xcodebuild -runFirstLaunch")
+        return xcodeReady()
+    }
+
+    /// Run a shell command with administrator privileges via the OS auth prompt.
+    @discardableResult
+    private static func runAdmin(_ command: String) -> Bool {
+        let escaped = command
+            .replacingOccurrences(of: "\\", with: "\\\\")
+            .replacingOccurrences(of: "\"", with: "\\\"")
+        let script = "do shell script \"\(escaped)\" with administrator privileges"
+        var err: NSDictionary?
+        let result = NSAppleScript(source: script)?.executeAndReturnError(&err)
+        return result != nil && err == nil
+    }
+
+    private static func shellQuote(_ s: String) -> String {
+        "'" + s.replacingOccurrences(of: "'", with: "'\\''") + "'"
+    }
+
+    /// Run a tool and capture stdout, or nil if it can't be launched.
+    private static func runCapturing(_ path: String, _ args: [String]) -> String? {
+        let p = Process()
+        p.executableURL = URL(fileURLWithPath: path)
+        p.arguments = args
+        let pipe = Pipe()
+        p.standardOutput = pipe
+        p.standardError = Pipe()
+        do { try p.run() } catch { return nil }
+        p.waitUntilExit()
+        let data = pipe.fileHandleForReading.readDataToEndOfFile()
+        return String(data: data, encoding: .utf8)
+    }
+
     static func whichViaShell(_ tool: String) -> String? {
         let p = Process()
         p.executableURL = URL(fileURLWithPath: "/bin/zsh")

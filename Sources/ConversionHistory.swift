@@ -43,7 +43,7 @@ struct ConversionRecord: Codable, Identifiable {
 }
 
 /// Append-only history of converted extensions, backed by UserDefaults.
-/// ponytail: UserDefaults JSON, fine for a list of conversions; move to a file/db only if it grows huge.
+/// UserDefaults JSON, fine for a list of conversions; move to a file/db only if it grows huge.
 @MainActor
 final class ConversionHistory: ObservableObject {
     @Published private(set) var records: [ConversionRecord] = []
@@ -143,6 +143,24 @@ final class ConversionHistory: ObservableObject {
         if let p = record.installedPath { try? fm.removeItem(atPath: p) }
         records.removeAll { $0.id == record.id }
         save()
+    }
+
+    /// True if a store extension (by CWS id) is installed — a record exists and
+    /// its .app is still on disk. Drives the store page's Remove-vs-Add button.
+    func isInstalled(storeId: String) -> Bool {
+        records.contains { rec in
+            rec.storeId == storeId
+                && (rec.installedPath.map { FileManager.default.fileExists(atPath: $0) } ?? false)
+        }
+    }
+
+    /// Remove every install for a CWS store id (the store-page uninstall path):
+    /// deletes each build's .app + archived source and drops the record.
+    @discardableResult
+    func removeByStoreId(_ storeId: String) -> Bool {
+        let matches = records.filter { $0.storeId == storeId }
+        matches.forEach { remove($0) }
+        return !matches.isEmpty
     }
 
     private func load() {

@@ -75,7 +75,7 @@ final class CLIUpdater {
     /// Download + extract the latest npm tarball into Application Support. `log` streams progress.
     /// `log` is always invoked on the main thread so callers can mutate `@Published` state safely.
     func update(rawLog: @escaping (String) -> Void) async throws {
-        // ponytail: hop every log call to main here so the 6 inline calls below
+        // Hop every log call to main here so the 6 inline calls below
         // and runProcess's handler share one main-thread guarantee.
         let log: (String) -> Void = { line in DispatchQueue.main.async { rawLog(line) } }
         let doc = try await fetchPackageDoc()

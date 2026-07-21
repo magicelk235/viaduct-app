@@ -31,6 +31,11 @@ final class ConverterViewModel: ObservableObject {
     /// Drives the honest "install Xcode" card instead of a silent build failure.
     @Published var needsXcode = false
 
+    /// The precise reason the Xcode gate is up — drives which one-click fix the
+    /// card offers (install / re-select / finish setup) instead of one dead-end
+    /// "install Xcode" message that keeps re-failing for users who already did.
+    @Published var xcodeStatus: CLIRunner.XcodeStatus = .ready
+
     /// Set when converting would fall back to ad-hoc signing (no Apple account
     /// in Xcode). Drives a pre-convert warning instead of letting the extension
     /// silently vanish on the next Safari quit.
@@ -114,7 +119,7 @@ final class ConverterViewModel: ObservableObject {
     }
 
     /// Register/unregister the app as a login item to match `autoRenewEnabled`.
-    /// ponytail: SMAppService.mainApp — no separate helper bundle/plist to maintain.
+    /// SMAppService.mainApp — no separate helper bundle/plist to maintain.
     func syncLoginItem() {
         do {
             // Either background feature needs the app relaunched at login so its
@@ -147,12 +152,16 @@ final class ConverterViewModel: ObservableObject {
         let args = options.conversionArgs()
         // A real build/sign needs full Xcode; --no-build / --temp-load do not.
         let needsBuild = !args.contains("--no-build") && !args.contains("--temp-load")
-        if needsBuild, !CLIRunner.xcodeReady() {
-            needsXcode = true
-            statusMessage = "Full Xcode required for build/sign."
-            appendLog("\u{2717} " + Self.xcodeMissingMessage)
-            appendLog("  Tip: use --temp-load or --no-build to convert without Xcode.")
-            return
+        if needsBuild {
+            let status = CLIRunner.xcodeStatus()
+            if status != .ready {
+                xcodeStatus = status
+                needsXcode = true
+                statusMessage = "Full Xcode required for build/sign."
+                appendLog("\u{2717} " + Self.xcodeMessage(for: status))
+                appendLog("  Tip: use --temp-load or --no-build to convert without Xcode.")
+                return
+            }
         }
         runCLI(args: args, label: "Conversion")
     }
@@ -191,9 +200,11 @@ final class ConverterViewModel: ObservableObject {
         // Full Xcode is required to package + sign the extension (Apple ships the
         // Safari packager only with Xcode). Detect it up front and explain, rather
         // than letting the run die deep inside xcodebuild with a cryptic log.
-        guard CLIRunner.xcodeReady() else {
+        let status = CLIRunner.xcodeStatus()
+        guard status == .ready else {
+            xcodeStatus = status
             needsXcode = true
-            failureSummary = Self.xcodeMissingMessage
+            failureSummary = Self.xcodeMessage(for: status)
             phase = .failed
             Feedback.failure()
             return
@@ -257,10 +268,21 @@ final class ConverterViewModel: ObservableObject {
                          options: .regularExpression) != nil
     }
 
-    /// The honest, actionable message shown when full Xcode is missing. Stated
-    /// plainly: this is an Apple requirement we cannot bundle away.
-    static let xcodeMissingMessage =
-        "Converting to a Safari extension needs Apple\u{2019}s full Xcode, which only Apple can provide \u{2014} it isn\u{2019}t something the app can bundle. Install it (free, from the App Store), open it once to finish setup, then try again."
+    /// Honest, per-state guidance for the Xcode gate. Each case names exactly
+    /// what's wrong and what the button will do — so a user who already has Xcode
+    /// never hits the same dead-end "install Xcode" text again.
+    static func xcodeMessage(for status: CLIRunner.XcodeStatus) -> String {
+        switch status {
+        case .ready:
+            return ""
+        case .notInstalled:
+            return "Converting to a Safari extension needs Apple\u{2019}s full Xcode, which only Apple can provide \u{2014} the app can\u{2019}t bundle it. Install it free from the App Store (it\u{2019}s a large download), then come back: Viaduct picks up automatically once it\u{2019}s ready."
+        case .notSelected:
+            return "Xcode is installed, but macOS is still pointed at the Command Line Tools, so the Safari packager can\u{2019}t be found. One click fixes it \u{2014} Viaduct will point macOS at Xcode (you\u{2019}ll be asked for your password)."
+        case .setupIncomplete:
+            return "Xcode is installed but hasn\u{2019}t finished its first-launch setup yet. One click fixes it \u{2014} Viaduct will accept the license and install the missing components (you\u{2019}ll be asked for your password)."
+        }
+    }
 
     /// Open Xcode's App Store page so the user can install it in one click.
     func openXcodeInstall() {
@@ -268,6 +290,48 @@ final class ConverterViewModel: ObservableObject {
         if let url = URL(string: "macappstore://apps.apple.com/app/xcode/id497799835") {
             NSWorkspace.shared.open(url)
         }
+    }
+
+    /// One-click recovery for the "Xcode installed but not selected" trap: point
+    /// macOS at Xcode (admin prompt), then, if that clears the gate, resume the
+    /// conversion the user was trying to run.
+    func fixXcodeSelection() {
+        guard case let .notSelected(dev) = xcodeStatus else { return }
+        if CLIRunner.selectXcode(developerDir: dev) { clearXcodeGateAndRetry() }
+        else { recheckXcode() }
+    }
+
+    /// One-click recovery for a fresh Xcode that hasn't finished first-launch.
+    func finishXcodeSetup() {
+        if CLIRunner.finishXcodeFirstLaunch() { clearXcodeGateAndRetry() }
+        else { recheckXcode() }
+    }
+
+    /// Re-diagnose Xcode; drop the gate if it's now clear. Called when the app
+    /// regains focus so a finished download/install/switch clears the card
+    /// without the user hunting for a "try again" button. Keeps the picked
+    /// extension so the CTA falls back to "Convert & Install".
+    func recheckXcode() {
+        guard needsXcode else { return }
+        let status = CLIRunner.xcodeStatus()
+        xcodeStatus = status
+        if status == .ready {
+            needsXcode = false
+            failureSummary = nil
+            if phase == .failed { phase = .idle }
+        } else {
+            failureSummary = Self.xcodeMessage(for: status)
+        }
+    }
+
+    /// Gate is clear after a one-click fix: resume the conversion in flight, or
+    /// just drop the card if there's nothing queued.
+    private func clearXcodeGateAndRetry() {
+        needsXcode = false
+        xcodeStatus = .ready
+        failureSummary = nil
+        if options.inputPath.isEmpty { phase = .idle }
+        else { phase = .idle; userConvert() }
     }
 
     /// Reveal a previously-installed extension app in Finder (used by history).

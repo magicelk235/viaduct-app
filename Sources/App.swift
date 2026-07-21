@@ -1,6 +1,7 @@
 import SwiftUI
 import AppKit
 import ServiceManagement
+import Combine
 
 /// Turns on macOS native window tabbing so Cmd+T / the tab bar work. SwiftUI
 /// leaves `allowsAutomaticWindowTabbing` off by default, which disables Cmd+T.
@@ -115,10 +116,17 @@ struct ViaductApp: App {
                 license.bootstrap(); vm.onLaunch()
                 AppUpdateChecker.shared.start()
                 InstallProgressBridge.shared.start()
-                InstallProgressBridge.shared.snapshot = { [weak vm] in
-                    ViaductApp.progressSnapshot(vm)
+                InstallProgressBridge.shared.snapshot = { [weak vm] queryId in
+                    ViaductApp.progressSnapshot(vm, queryId: queryId)
                 }
                 AppDelegate.openURLHandler = { handleOpenURL($0) }
+            }
+            // If the Xcode gate is up, a finished download / component install /
+            // toolchain switch usually happens while the user is away in the App
+            // Store or Xcode. Re-diagnose on focus so the card clears itself.
+            .onReceive(NotificationCenter.default.publisher(
+                for: NSApplication.didBecomeActiveNotification)) { _ in
+                vm.recheckXcode()
             }
             // New-version banner (GitHub Releases, checked daily). Dismiss ✕
             // hides it until the next check finds a version.
@@ -213,10 +221,11 @@ struct ViaductApp: App {
 
     private func handleOpenURL(_ url: URL) {
         guard url.scheme == "viaduct" else { return }
-        if url.host == "install" {
-            let components = URLComponents(url: url, resolvingAgainstBaseURL: false)
-            let items = components?.queryItems
-            if let id = items?.first(where: { $0.name == "id" })?.value {
+        let items = URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems
+        let id = items?.first(where: { $0.name == "id" })?.value
+        switch url.host {
+        case "install":
+            if let id {
                 // The store URL is /detail/NAME/ID — pass NAME so the app isn't named
                 // after the random-looking ID when the manifest name is an __MSG_ i18n key.
                 let name = items?.first(where: { $0.name == "name" })?.value
@@ -228,13 +237,34 @@ struct ViaductApp: App {
                 InstallProgressBridge.shared.downloading = true
                 downloadAndConvert(extensionId: id, displayName: name)
             }
+        case "remove":
+            // Store-page "Remove from Safari": delete every install for this CWS
+            // id (its .app + archived source + history record). Headless like
+            // install — the page confirms the result by re-polling installed state.
+            if let id { vm.history.removeByStoreId(id) }
+        default:
+            break
         }
     }
 
     /// The state dict the Safari extension polls for; rendered as the install
-    /// bar on the Chrome Web Store page.
+    /// bar on the Chrome Web Store page. When `queryId` is set, also answers
+    /// whether that CWS id is installed (drives the Add/Remove button).
     @MainActor
-    private static func progressSnapshot(_ vm: ConverterViewModel?) -> [String: Any] {
+    private static func progressSnapshot(_ vm: ConverterViewModel?, queryId: String?) -> [String: Any] {
+        var dict = baseSnapshot(vm)
+        // Only added when asked: this snapshot is broadcast on an unauthenticated
+        // bus, so we never volunteer the user's full installed set — just a
+        // yes/no for the single id they queried.
+        if let queryId {
+            dict["forId"] = queryId
+            dict["installed"] = vm?.history.isInstalled(storeId: queryId) ?? false
+        }
+        return dict
+    }
+
+    @MainActor
+    private static func baseSnapshot(_ vm: ConverterViewModel?) -> [String: Any] {
         guard let vm else { return ["state": "idle"] }
         if vm.showPaywall {
             // Reason kept generic on purpose: this snapshot is broadcast on a

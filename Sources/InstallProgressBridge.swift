@@ -24,9 +24,11 @@ final class InstallProgressBridge {
     /// while `vm.phase` is still `.idle`).
     var downloading = false
 
-    /// Set by the app at launch; returns the JSON-serializable state dict.
+    /// Set by the app at launch; returns the JSON-serializable state dict for a
+    /// poll. `queryId` is the CWS id of an installed-check (nil for a plain
+    /// progress poll); the app adds `forId`/`installed` when it's present.
     /// Runs on the main actor (the observer hops there before calling).
-    var snapshot: () -> [String: Any] = { ["state": "idle"] }
+    var snapshot: (String?) -> [String: Any] = { _ in ["state": "idle"] }
 
     private var started = false
 
@@ -35,14 +37,15 @@ final class InstallProgressBridge {
         started = true
         DistributedNotificationCenter.default().addObserver(
             forName: Self.requestNote, object: nil, queue: nil
-        ) { [weak self] _ in
-            Task { @MainActor in self?.reply() }
+        ) { [weak self] note in
+            let queryId = note.object as? String
+            Task { @MainActor in self?.reply(queryId: queryId) }
         }
     }
 
     @MainActor
-    private func reply() {
-        guard let data = try? JSONSerialization.data(withJSONObject: snapshot()),
+    private func reply(queryId: String?) {
+        guard let data = try? JSONSerialization.data(withJSONObject: snapshot(queryId)),
               let json = String(data: data, encoding: .utf8) else { return }
         DistributedNotificationCenter.default().postNotificationName(
             Self.stateNote, object: json, userInfo: nil, deliverImmediately: true)

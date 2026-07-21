@@ -46,7 +46,7 @@ final class LicenseManager: ObservableObject {
     // `keychain-access-groups` entitlement that would fix that is restricted to
     // provisioning-profile builds (a plain Developer ID app can't claim it — it
     // fails to launch). A Gumroad license key isn't a secret worth that
-    // friction, so a file it is. ponytail: file over Keychain — the key is a
+    // friction, so a file it is. File over Keychain — the key is a
     // purchase receipt, not a password.
 
     /// ~/Library/Application Support/Viaduct/license (created lazily on first write).
@@ -104,7 +104,7 @@ final class LicenseManager: ObservableObject {
 
     /// Monotonic count of conversions an unlicensed user has spent. Soft
     /// (UserDefaults) — a prefs wipe resets it, but that only buys 2 more free
-    /// signed conversions before the wall returns. ponytail: soft counter, move
+    /// signed conversions before the wall returns. Soft counter, move
     /// to StoreKit/server only if free-tier abuse proves material.
     private(set) var freeConversionsUsed: Int {
         get { UserDefaults.standard.integer(forKey: "freeConversionsUsed") }

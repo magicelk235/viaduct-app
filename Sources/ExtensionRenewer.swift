@@ -38,7 +38,7 @@ enum ChromeStore {
 /// conversion from the archived source for any installed extension nearing that
 /// window, re-signing it fresh — so the user never has to reconvert by hand.
 ///
-/// ponytail: rebuild-from-source via the same CLI path. No separate re-sign codepath
+/// Rebuild-from-source via the same CLI path. No separate re-sign codepath
 /// to maintain; a free-account profile can only be re-minted by an Xcode build anyway.
 @MainActor
 final class ExtensionRenewer {
@@ -66,7 +66,7 @@ final class ExtensionRenewer {
         do {
             try fm.createDirectory(at: archiveDir, withIntermediateDirectories: true)
             let ext = URL(fileURLWithPath: path).pathExtension
-            // ponytail: one slot per app name; re-convert overwrites it. Dirs (unpacked)
+            // One slot per app name; re-convert overwrites it. Dirs (unpacked)
             // and archives both handled by copyItem.
             let dest = archiveDir.appendingPathComponent(appName)
                 .appendingPathExtension(ext.isEmpty ? "src" : ext)
@@ -213,7 +213,7 @@ final class ExtensionRenewer {
             content.title = "Couldn't renew \(rec.resolvedAppName)"
             content.body = "Its signature lapses \(rec.expiresAt.formatted(date: .abbreviated, time: .omitted)). Open Viaduct and reconvert it before Safari drops it."
             content.sound = .default
-            // ponytail: nil trigger = deliver now. No identifier reuse needed; one per failure.
+            // Nil trigger = deliver now. No identifier reuse needed; one per failure.
             center.add(UNNotificationRequest(identifier: rec.id.uuidString,
                                              content: content, trigger: nil))
         }

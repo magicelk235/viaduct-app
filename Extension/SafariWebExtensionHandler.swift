@@ -19,11 +19,21 @@ public class SafariWebExtensionHandler: NSObject, NSExtensionRequestHandling {
     public func beginRequest(with context: NSExtensionContext) {
         let request = context.inputItems.first as? NSExtensionItem
         let message = request?.userInfo?[SFExtensionMessageKey] as? [String: Any]
+        let type = message?["type"] as? String
 
-        guard message?["type"] as? String == "progress" else {
+        guard type == "progress" || type == "installed" else {
             respond(context, ["state": "unknown"])
             return
         }
+
+        // An installed-check carries the queried CWS id as the notification
+        // object; a progress poll carries none. The app replies on stateNote
+        // with a JSON snapshot; installed-check replies echo `forId`, so we
+        // accept only the reply for our own id (the bus is shared/broadcast).
+        let queryId = type == "installed" ? (message?["id"] as? String) : nil
+        let timeoutPayload: [String: Any] = type == "installed"
+            ? ["installed": false, "state": "unreachable"]
+            : ["state": "unreachable"]
 
         let center = DistributedNotificationCenter.default()
         let lock = NSLock()
@@ -44,15 +54,21 @@ public class SafariWebExtensionHandler: NSObject, NSExtensionRequestHandling {
                   let data = json.data(using: .utf8),
                   let dict = (try? JSONSerialization.jsonObject(with: data)) as? [String: Any]
             else { return }
-            finish(dict)
+            if let queryId {
+                // Ignore progress replies (and other ids) racing on the bus.
+                guard dict["forId"] as? String == queryId else { return }
+                finish(["installed": dict["installed"] as? Bool ?? false])
+            } else {
+                finish(dict)
+            }
         }
-        center.postNotificationName(Self.requestNote, object: nil, userInfo: nil,
+        center.postNotificationName(Self.requestNote, object: queryId, userInfo: nil,
                                     deliverImmediately: true)
         // App not running / not listening → tell the page instead of hanging.
         // 2s, not 1s: the appex is spawned cold per request, and the
         // notification round trip can straggle past a tight budget.
         DispatchQueue.global().asyncAfter(deadline: .now() + 2.0) {
-            finish(["state": "unreachable"])
+            finish(timeoutPayload)
         }
     }
 

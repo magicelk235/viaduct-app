@@ -13,4 +13,11 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
             (e) => sendResponse({ state: 'unreachable', error: String((e && e.message) || e) }));
     return true;
   }
+  if (message && message.type === 'viaduct-installed') {
+    browser.runtime
+      .sendNativeMessage('com.magicelk235.viaduct.Extension', { type: 'installed', id: message.id })
+      .then(sendResponse,
+            (e) => sendResponse({ installed: false, error: String((e && e.message) || e) }));
+    return true;
+  }
 });

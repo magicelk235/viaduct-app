@@ -3,21 +3,170 @@ function installViaduct(extId, name, btn) {
   if (name) url += `&name=${encodeURIComponent(name)}`;
   window.location.href = url;
   // The app converts headless (no Viaduct window); the button becomes the UI.
-  startProgressPolling(btn);
+  startProgressPolling(btn, extId);
+}
+
+// ---- Installed state ------------------------------------------------------
+// Whether each store extension (by CWS id) is installed in Safari, so the page
+// can show "Remove from Safari" instead of "Add to Safari". Filled lazily by
+// asking the app (content -> background -> native handler -> app); a resolved
+// answer that changes state re-runs apply() to repaint the button.
+const installedById = new Map();      // id -> boolean (definitive answers only)
+const installedInFlight = new Set();  // ids with a query in progress
+const installedTried = new Map();     // id -> last attempt ms (backoff)
+
+function currentDetailId() {
+  const m = window.location.pathname.match(/\/detail\/[^/]+\/([a-z]{32})/);
+  return m ? m[1] : null;
+}
+
+function isInstalledNow() {
+  const id = currentDetailId();
+  return !!(id && installedById.get(id) === true);
+}
+
+function desiredLabel() {
+  return isInstalledNow() ? 'Remove from Safari' : 'Add to Safari';
+}
+
+// Teal = add (dark text), red = remove (white text).
+function desiredPaint() {
+  return isInstalledNow()
+    ? { bg: '#B23B32', fg: '#FFFFFF' }
+    : { bg: '#4A9DAD', fg: '#0A1A1E' };
+}
+
+// Style our own injected button (not a repurposed store button) for the
+// current add/remove state.
+function paintInjected(btn) {
+  const label = desiredLabel();
+  // Steady-state no-op: bail once the button already reflects the desired mode.
+  // Assigning textContent replaces child nodes — a childList mutation that would
+  // re-fire the MutationObserver into apply() forever. The dataset flag (an
+  // attribute, not watched) gates all writes so a stable state mutates nothing.
+  if (btn.dataset.vdMode === label) return;
+  const paint = desiredPaint();
+  btn.dataset.vdMode = label;
+  btn.textContent = label;
+  btn.style.cssText = VD_BTN_CSS;
+  btn.style.background = paint.bg;
+  btn.style.color = paint.fg;
+}
+
+function refreshInstalled(id) {
+  // Query once per id and keep the definitive answer. Install/remove update the
+  // cache directly, so there's no need to re-poll on every mutation.
+  if (!id || installedInFlight.has(id) || installedById.has(id)) return;
+  const now = Date.now();
+  if (now - (installedTried.get(id) || 0) < 1500) return; // backoff if app asleep
+  installedTried.set(id, now);
+  installedInFlight.add(id);
+  browser.runtime.sendMessage({ type: 'viaduct-installed', id }).then(
+    (res) => {
+      installedInFlight.delete(id);
+      if (res && typeof res.installed === 'boolean') {
+        installedById.set(id, res.installed);
+        apply(); // repaint with the real state
+      }
+      // No definitive answer (app unreachable): leave uncached so a later tick
+      // retries. The button stays "Add to Safari" until then.
+    },
+    () => { installedInFlight.delete(id); }
+  );
+}
+
+// "Remove from Safari" click: ask the app to delete the installed .app, then
+// confirm by polling installed-state. The app reports no removal phases, so we
+// verify the result instead of streaming progress.
+function removeViaduct(id, btn) {
+  window.location.href = `viaduct://remove?id=${id}`;
+  const gen = ++pollGen;
+  installState = { path: window.location.pathname, id };
+  setState('Removing…', 'Deleting the Safari app', 0.5, '#B23B32');
+  if (btn) renderProgress(btn);
+  const startedAt = Date.now();
+  const tick = async () => {
+    if (gen !== pollGen) return;
+    let installed = null;
+    try {
+      const req = browser.runtime.sendMessage({ type: 'viaduct-installed', id });
+      req.catch(() => {});
+      const res = await Promise.race([
+        req, new Promise(resolve => setTimeout(() => resolve(null), 2000)),
+      ]);
+      if (res && typeof res.installed === 'boolean') installed = res.installed;
+    } catch (e) { /* app asleep; try next tick */ }
+    if (gen !== pollGen) return;
+    if (installed === false) {
+      installedById.set(id, false);
+      setState('Removed ✓', 'Gone from Safari', 1, '#B23B32');
+      // Return the card to an "Add to Safari" button shortly.
+      setTimeout(() => { if (gen === pollGen) dismissProgress(); }, 1200);
+      return;
+    }
+    if (Date.now() - startedAt > 15000) {
+      setState('Remove failed', 'Open Viaduct to remove it.', 1, '#F87171');
+      return;
+    }
+    setTimeout(tick, 700);
+  };
+  tick();
 }
 
 function removeChromePromos() {
-  // The blue "Switch to Chrome to install extensions and themes" banner has no stable
-  // id/class. The phrase bubbles up through every ancestor to <body>, so matching on
-  // textContent alone would hide the whole page. Only hide elements that are themselves
-  // banner-shaped: short (a row, not the page) and visible. visibility:hidden keeps
-  // layout out of the way without collapsing siblings.
-  const all = document.querySelectorAll('div, section, aside');
+  // Two nags, both text-only (no stable id/class):
+  //   1. The blue "Switch to Chrome to install extensions and themes" banner.
+  //   2. The "Switch to Chrome?" modal ("Google recommends using Chrome when
+  //      using extensions and themes.") with a click-blocking backdrop.
+  // The phrases bubble up through every ancestor to <body>, so matching on
+  // textContent alone would hide the whole page. Guard each case: the banner
+  // is banner-shaped (short row), the modal subtree carries only its own text.
+  let hidModal = false;
+  const all = document.querySelectorAll(
+    'div, section, aside, dialog, [role="dialog"], [role="alertdialog"]'
+  );
   for (const el of all) {
-    if (!(el.textContent || '').toLowerCase().includes('switch to chrome to install')) continue;
-    const h = el.offsetHeight;
-    if (h > 0 && h < 120) { el.style.display = 'none'; }
+    const text = (el.textContent || '').toLowerCase();
+    if (text.includes('switch to chrome to install')) {
+      const h = el.offsetHeight;
+      // visibility-free: display:none keeps layout out of the way without
+      // collapsing siblings.
+      if (h > 0 && h < 120) { el.style.display = 'none'; }
+      continue;
+    }
+    // Only act on the compact dialog subtree, never the page-level bubble.
+    if (text.includes('google recommends using chrome') && text.length < 300) {
+      if (hideChromeModal(el)) hidModal = true;
+    }
   }
+  // The modal locks page scroll (inline overflow:hidden); hiding the overlay
+  // leaves that lock in place, so clear it.
+  if (hidModal) {
+    document.documentElement.style.overflow = '';
+    document.body.style.overflow = '';
+  }
+}
+
+// Hide the whole modal overlay (dialog card + dimming backdrop), not just the
+// card — otherwise the backdrop stays and swallows every click. Walk up to the
+// dialog/fixed wrapper that holds both layers.
+function hideChromeModal(el) {
+  let node = el;
+  for (let i = 0; i < 8 && node && node !== document.body; i++) {
+    const role = node.getAttribute && node.getAttribute('role');
+    if (
+      node.tagName === 'DIALOG' ||
+      role === 'dialog' ||
+      role === 'alertdialog' ||
+      getComputedStyle(node).position === 'fixed'
+    ) {
+      node.style.display = 'none';
+      return true;
+    }
+    node = node.parentElement;
+  }
+  el.style.display = 'none';
+  return true;
 }
 
 // Pill styling for the button we inject ourselves (also reapplied after a
@@ -38,7 +187,7 @@ const VD_BTN_CSS =
 // A surviving store button (relabeled or not) or live progress card, other
 // than `skip` (our own injected button).
 function storeInstallButton(skip) {
-  const phrases = ['add to safari', 'available on chrome', 'add to chrome', 'get chrome'];
+  const phrases = ['add to safari', 'remove from safari', 'available on chrome', 'add to chrome', 'get chrome'];
   for (const btn of document.querySelectorAll('button, [role="button"], a')) {
     if (btn === skip) continue;
     if (btn.dataset.vdProgress) return btn;
@@ -60,14 +209,16 @@ function ensureInstallButton() {
   // A hidden injected button sits in a dead SPA view — stale, replace it.
   const keep = onDetail && !store && injected && injected.offsetHeight > 0;
   if (injected && !keep) injected.remove();
-  if (!onDetail || store || keep) return;
+  // Keeping our live injected button: refresh its label, since an install or
+  // remove may have changed the state and Google never re-renders our node.
+  if (keep) { paintInjected(injected); return; }
+  if (!onDetail || store) return;
   // Anchor on the visible title, not the first <h1> (that can be a dead view).
   const h1 = [...document.querySelectorAll('h1')].find(el => el.offsetHeight > 0);
   if (!h1) return; // header not rendered yet; the next mutation tick retries
   const btn = document.createElement('button');
   btn.className = 'vd-install';
-  btn.textContent = 'Add to Safari';
-  btn.style.cssText = VD_BTN_CSS;
+  paintInjected(btn);
   h1.insertAdjacentElement('afterend', btn);
   // An install is running for this page and the SPA dropped the node that was
   // showing progress — the fresh button becomes the progress card.
@@ -76,54 +227,61 @@ function ensureInstallButton() {
 
 function enableInstallButton() {
   const buttons = document.querySelectorAll('button, [role="button"], a');
+  const chromePhrases = ['available on chrome', 'add to chrome', 'get chrome'];
+  // Our own labels too, so a state flip (install/remove) repaints a button we
+  // already relabelled — Google won't re-render it back to a Chrome phrase.
+  const ourLabels = ['add to safari', 'remove from safari'];
+  const relabelSources = chromePhrases.concat(ourLabels);
+  const label = desiredLabel();
+  const paint = desiredPaint();
   for (const btn of buttons) {
-    // Already showing install progress — leave it alone.
+    // Already showing install/remove progress — leave it alone.
     if (btn.dataset.vdProgress) continue;
+    // Our injected button is owned by ensureInstallButton().
+    if (btn.classList && btn.classList.contains('vd-install')) continue;
 
     // textContent (not innerText) so disabled/greyed buttons still match.
     const text = (btn.textContent || '').toLowerCase().trim();
-    const targetPhrases = ['available on chrome', 'add to chrome', 'get chrome'];
+    if (!relabelSources.some(phrase => text.includes(phrase))) continue;
 
-    if (targetPhrases.some(phrase => text.includes(phrase))) {
-      // An install is running for THIS page and the SPA re-rendered the button
-      // back to its Chrome label — re-adopt it as the progress card.
-      if (installState && window.location.pathname === installState.path) {
-        renderProgress(btn);
-        continue;
-      }
-
-      // Re-enable disabled buttons
-      if (btn.hasAttribute('disabled')) {
-        btn.removeAttribute('disabled');
-      }
-      btn.style.pointerEvents = 'auto';
-
-      // Paint it the app's brand teal so the repurposed button reads as "ours",
-      // not Google's. setProperty(..., 'important') beats the store's own rules.
-      btn.style.setProperty('background', '#4A9DAD', 'important');
-      btn.style.setProperty('color', '#0A1A1E', 'important');
-      btn.style.setProperty('border-color', '#4A9DAD', 'important');
-
-      // Deep replace text nodes to preserve Google's button structure (spans, svgs).
-      // No persistent flag: on SPA navigation Google reuses the same button node and
-      // resets its text to "Add to Chrome", so we must relabel whenever a Chrome
-      // phrase is present, not just the first time we see the node.
-      const changeText = (el) => {
-        for (const child of el.childNodes) {
-          if (child.nodeType === Node.TEXT_NODE) {
-            const lower = child.nodeValue.toLowerCase().trim();
-            if (targetPhrases.some(p => lower.includes(p))) {
-              child.nodeValue = 'Add to Safari';
-            }
-          } else if (child.nodeType === Node.ELEMENT_NODE) {
-            // Inherit the teal text color over Google's per-span colors.
-            child.style.setProperty('color', '#0A1A1E', 'important');
-            changeText(child);
-          }
-        }
-      };
-      changeText(btn);
+    // An install is running for THIS page and the SPA re-rendered the button
+    // back to its Chrome label — re-adopt it as the progress card.
+    if (installState && window.location.pathname === installState.path) {
+      renderProgress(btn);
+      continue;
     }
+
+    // Re-enable disabled buttons
+    if (btn.hasAttribute('disabled')) {
+      btn.removeAttribute('disabled');
+    }
+    btn.style.pointerEvents = 'auto';
+
+    // Paint it the app's brand color so the repurposed button reads as "ours",
+    // not Google's. setProperty(..., 'important') beats the store's own rules.
+    btn.style.setProperty('background', paint.bg, 'important');
+    btn.style.setProperty('color', paint.fg, 'important');
+    btn.style.setProperty('border-color', paint.bg, 'important');
+
+    // Deep replace text nodes to preserve Google's button structure (spans, svgs).
+    // No persistent flag: on SPA navigation Google reuses the same button node and
+    // resets its text to "Add to Chrome", so we must relabel whenever a known
+    // phrase is present, not just the first time we see the node.
+    const changeText = (el) => {
+      for (const child of el.childNodes) {
+        if (child.nodeType === Node.TEXT_NODE) {
+          const lower = child.nodeValue.toLowerCase().trim();
+          if (relabelSources.some(p => lower.includes(p)) && child.nodeValue.trim() !== label) {
+            child.nodeValue = label;
+          }
+        } else if (child.nodeType === Node.ELEMENT_NODE) {
+          // Inherit the button text color over Google's per-span colors.
+          child.style.setProperty('color', paint.fg, 'important');
+          changeText(child);
+        }
+      }
+    };
+    changeText(btn);
   }
 }
 
@@ -135,6 +293,7 @@ function apply() {
   enableInstallButton();
   ensureInstallButton();
   removeChromePromos();
+  refreshInstalled(currentDetailId());
 }
 
 function start() {
@@ -158,8 +317,8 @@ document.addEventListener('click', (e) => {
   if (!btn || btn.dataset.vdProgress) return;
 
   const text = (btn.textContent || '').toLowerCase().trim();
-  const clickPhrases = ['add to safari', 'available on chrome', 'add to chrome', 'get chrome'];
-  
+  const clickPhrases = ['add to safari', 'remove from safari', 'available on chrome', 'add to chrome', 'get chrome'];
+
   if (clickPhrases.some(phrase => text.includes(phrase))) {
     // Store URL is /detail/<slug>/<id>. Capture both: the slug names the app so
     // it isn't named after the random-looking id. Prefer the page's real <h1>
@@ -168,6 +327,10 @@ document.addEventListener('click', (e) => {
     if (match) {
         e.preventDefault();
         e.stopPropagation();
+        if (text.includes('remove from safari')) {
+          removeViaduct(match[2], btn);
+          return;
+        }
         // The store sets <title> to "<Extension Name> - Chrome Web Store" for the
         // current page — reliable, unlike querySelector('h1') which can grab a
         // featured/related listing. De-slugged URL segment is the fallback.
@@ -274,6 +437,9 @@ function dismissProgress() {
     btn.style.setProperty('color', '#0A1A1E', 'important');
     btn.style.setProperty('border-color', '#4A9DAD', 'important');
   });
+  // Reconcile the just-restored button(s) with the current install state: after
+  // an install/remove the desired label may be "Remove from Safari", not "Add".
+  apply();
 }
 
 function setState(title, sub, fraction, color) {
@@ -287,9 +453,9 @@ function stopProgressPolling() {
   pollGen++;
 }
 
-function startProgressPolling(btn) {
+function startProgressPolling(btn, id) {
   const gen = ++pollGen;
-  installState = { path: window.location.pathname };
+  installState = { path: window.location.pathname, id };
   setState('Contacting Viaduct…', 'Launching the converter', 0.04, '#4A9DAD');
   if (btn) renderProgress(btn);
   const startedAt = Date.now();
@@ -326,7 +492,10 @@ function startProgressPolling(btn) {
       setState(state.title || 'Converting…', state.subtitle || '',
                Math.max(0.04, state.fraction || 0), '#4A9DAD');
     } else if (s === 'done' && sawActivity) {
+      if (id) installedById.set(id, true);
       setState('Installed ✓', 'Enable it in Safari → Settings → Extensions', 1, '#4A9DAD');
+      // Let the success message land, then close the card on its own.
+      setTimeout(() => { if (gen === pollGen) dismissProgress(); }, 2500);
       return;
     } else if (s === 'failed' && (sawActivity || elapsed > 10000)) {
       setState('Install failed', state.message || 'Open Viaduct for details.', 1, '#F87171');

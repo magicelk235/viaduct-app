@@ -194,7 +194,7 @@ struct LiquidGlassGroup<Content: View>: View {
 //
 // DESIGN.md's signature decorative moment: the aqua-to-deep-teal wash from the
 // Viaduct icon's arch, used exactly ONCE per surface across the very top of the
-// canvas as a launch-banner. ponytail: a thin top wash, not a full band — the
+// canvas as a launch-banner. A thin top wash, not a full band — the
 // window is small, so the gradient fades into the canvas rather than padding 96px.
 struct HeroStripe: View {
     var height: CGFloat = 120
@@ -495,5 +495,5 @@ struct PillTabPicker<T: Hashable & Identifiable>: View {
     }
 }
 
-// ponytail: equality via id since the enums are simple String-backed cases.
+// Equality via id since the enums are simple String-backed cases.
 extension PillTabPicker where T: CaseIterable {}
